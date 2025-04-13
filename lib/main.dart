@@ -24,10 +24,6 @@ void main() async {
     Hive.registerAdapter(UserAdapter());
   }
   
-  // Clear boxes for development purposes (remove this in production)
-  await Hive.deleteBoxFromDisk('missionsBox');
-  await Hive.deleteBoxFromDisk('userBox');
-  
   // Open boxes
   await Hive.openBox<Mission>('missionsBox');
   await Hive.openBox<User>('userBox');

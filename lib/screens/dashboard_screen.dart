@@ -55,30 +55,12 @@ class DashboardScreen extends StatelessWidget {
                   _buildDailyMissionsSection(context, provider),
 
                   // Bottom padding
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder: (context) => SingleChildScrollView(
-              child: Container(
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom,
-                ),
-                child: const AddMissionForm(),
-              ),
-            ),
-          );
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('New Mission'),
       ),
     );
   }
