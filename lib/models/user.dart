@@ -91,16 +91,26 @@ class User {
 
   // Get the appropriate character image based on level
   String getCharacterImagePath() {
-    if (level >= 20) {
-      return 'assets/images/jinwoo_level_20.png';
-    } else if (level >= 15) {
-      return 'assets/images/jinwoo_level_15.png';
-    } else if (level >= 10) {
-      return 'assets/images/jinwoo_level_10.png';
-    } else if (level >= 5) {
-      return 'assets/images/jinwoo_level_5.png';
-    } else {
-      return 'assets/images/jinwoo_level_1.png';
+    try {
+      // Use only webp and jpg formats that are known to work well on both platforms
+      if (level >= 25) {
+        return 'assets/images/7.webp'; // Level 25+
+      } else if (level >= 20) {
+        return 'assets/images/6.webp'; // Level 20-24
+      } else if (level >= 15) {
+        return 'assets/images/5.webp'; // Level 15-19
+      } else if (level >= 10) {
+        return 'assets/images/4.webp'; // Level 10-14
+      } else if (level >= 5) {
+        return 'assets/images/2.jpg'; // Using 2.jpg for Level 5-9
+      } else if (level >= 3) {
+        return 'assets/images/2.jpg'; // Level 3-4
+      } else {
+        return 'assets/images/1.webp'; // Level 1-2
+      }
+    } catch (e) {
+      // If any error occurs, return the default image
+      return 'assets/images/1.webp';
     }
   }
 } 

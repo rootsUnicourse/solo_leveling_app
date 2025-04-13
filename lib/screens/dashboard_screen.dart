@@ -6,10 +6,17 @@ import 'package:solo_leveling_app/providers/app_provider.dart';
 import 'package:solo_leveling_app/widgets/add_mission_form.dart';
 import 'package:solo_leveling_app/widgets/mission_item.dart';
 import 'package:solo_leveling_app/widgets/stat_item.dart';
+import 'package:flutter/foundation.dart';
+import 'package:solo_leveling_app/services/storage_service.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,6 +30,51 @@ class DashboardScreen extends StatelessWidget {
         ),
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
+        actions: [
+          // Reset button (for troubleshooting)
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () async {
+              try {
+                // Show confirmation dialog
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Reset App Data'),
+                    content: const Text('This will reset all your data. Are you sure?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        child: const Text('Reset'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirmed == true) {
+                  await StorageService.resetAllData();
+                  // Refresh the provider
+                  if (mounted) {
+                    Provider.of<AppProvider>(context, listen: false).init();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('App data reset successfully')),
+                    );
+                  }
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+              }
+            },
+          ),
+        ],
       ),
       body: Consumer<AppProvider>(
         builder: (context, provider, child) {
@@ -51,8 +103,12 @@ class DashboardScreen extends StatelessWidget {
                   // Stats grid
                   _buildStatsGrid(context, user),
 
-                  // Daily missions section
-                  _buildDailyMissionsSection(context, provider),
+                  // Active missions section
+                  _buildActiveMissionsSection(context, provider),
+                  
+                  // Completed missions (history) section
+                  if (provider.completedMissions.isNotEmpty)
+                    _buildCompletedMissionsSection(context, provider),
 
                   // Bottom padding
                   const SizedBox(height: 20),
@@ -96,18 +152,35 @@ class DashboardScreen extends StatelessWidget {
                 aspectRatio: 1,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    user.getCharacterImagePath(),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.person,
-                          size: 80,
-                          color: Colors.grey,
-                        ),
-                      );
+                  child: Builder(
+                    builder: (context) {
+                      try {
+                        return Image.asset(
+                          user.getCharacterImagePath(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            debugPrint('Error loading image: $error');
+                            return Container(
+                              color: Colors.grey.withOpacity(0.3),
+                              child: Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            );
+                          },
+                        );
+                      } catch (e) {
+                        debugPrint('Exception when loading image: $e');
+                        return Container(
+                          color: Colors.grey.withOpacity(0.3),
+                          child: Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),
@@ -204,7 +277,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDailyMissionsSection(BuildContext context, AppProvider provider) {
+  Widget _buildActiveMissionsSection(BuildContext context, AppProvider provider) {
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
@@ -247,7 +320,7 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const Divider(height: 24),
-          if (provider.todayMissions.isEmpty)
+          if (provider.activeMissions.isEmpty)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(32.0),
@@ -260,7 +333,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 16),
                     Text(
-                      'No daily quests yet',
+                      'No active missions',
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 18,
@@ -283,13 +356,49 @@ class DashboardScreen extends StatelessWidget {
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: provider.todayMissions.length,
+              itemCount: provider.activeMissions.length,
               itemBuilder: (context, index) {
                 return MissionItem(
-                  mission: provider.todayMissions[index],
+                  mission: provider.activeMissions[index],
                 );
               },
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedMissionsSection(BuildContext context, AppProvider provider) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mission History',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const Divider(height: 24),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: provider.completedMissions.length,
+            itemBuilder: (context, index) {
+              return MissionItem(
+                mission: provider.completedMissions[index],
+              );
+            },
+          ),
         ],
       ),
     );

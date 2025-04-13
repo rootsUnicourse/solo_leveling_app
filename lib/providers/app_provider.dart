@@ -7,11 +7,13 @@ import 'package:hive/hive.dart';
 
 class AppProvider extends ChangeNotifier {
   User? _user;
-  List<Mission> _todayMissions = [];
+  List<Mission> _activeMissions = [];
+  List<Mission> _completedMissions = [];
   bool _isLoading = true;
 
   User? get user => _user;
-  List<Mission> get todayMissions => _todayMissions;
+  List<Mission> get activeMissions => _activeMissions;
+  List<Mission> get completedMissions => _completedMissions;
   bool get isLoading => _isLoading;
 
   // Initialize the provider
@@ -22,7 +24,7 @@ class AppProvider extends ChangeNotifier {
     try {
       // Load user and missions
       await _loadUser();
-      await _loadTodayMissions();
+      await _loadAllMissions();
     } catch (e) {
       debugPrint('Error initializing app: $e');
     }
@@ -37,9 +39,17 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Load today's missions from storage
-  Future<void> _loadTodayMissions() async {
-    _todayMissions = await StorageService.getTodayMissions();
+  // Load all missions from storage and separate active and completed
+  Future<void> _loadAllMissions() async {
+    final allMissions = await StorageService.getTodayMissions();
+    
+    // Sort by date, newest first
+    allMissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    
+    // Separate active and completed missions
+    _activeMissions = allMissions.where((mission) => !mission.isCompleted).toList();
+    _completedMissions = allMissions.where((mission) => mission.isCompleted).toList();
+    
     notifyListeners();
   }
 
@@ -63,10 +73,10 @@ class AppProvider extends ChangeNotifier {
     await StorageService.saveMission(mission);
     
     // Reload missions from storage to ensure consistency
-    await _loadTodayMissions();
+    await _loadAllMissions();
     
     // Debug
-    debugPrint('Added mission: ${mission.name}, total missions: ${_todayMissions.length}');
+    debugPrint('Added mission: ${mission.name}, total active missions: ${_activeMissions.length}');
   }
 
   // Complete a mission
@@ -75,7 +85,7 @@ class AppProvider extends ChangeNotifier {
     
     // Reload user and missions to reflect changes
     await _loadUser();
-    await _loadTodayMissions();
+    await _loadAllMissions();
   }
 
   // Get the appropriate mission type icon
