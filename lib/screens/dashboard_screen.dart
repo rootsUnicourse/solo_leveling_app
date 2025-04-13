@@ -20,16 +20,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Solo Leveling',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
+        automaticallyImplyLeading: false,
+        title: null,
         backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
+        centerTitle: false,
+        elevation: 0,
+        toolbarHeight: 48,
         actions: [
           // Reset button (for troubleshooting)
           IconButton(
@@ -237,8 +236,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatsGrid(BuildContext context, user) {
-    return Padding(
+    return Container(
+      margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade900,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade800),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -247,6 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 16),
@@ -282,9 +288,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.grey.shade900,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.grey.shade800),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,6 +303,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
               ElevatedButton.icon(
@@ -316,10 +323,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
                 icon: const Icon(Icons.add),
                 label: const Text('Add'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
               ),
             ],
           ),
-          const Divider(height: 24),
+          Divider(height: 24, color: Colors.grey.shade700),
           if (provider.activeMissions.isEmpty)
             const Center(
               child: Padding(
@@ -373,9 +384,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: Colors.grey.shade800,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: Colors.grey.shade700),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -388,7 +399,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.grey,
             ),
           ),
-          const Divider(height: 24),
+          Divider(height: 24, color: Colors.grey.shade600),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),

@@ -24,6 +24,7 @@ class StatItem extends StatelessWidget {
 
     return Card(
       elevation: 2,
+      color: Colors.grey.shade800,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -42,6 +43,7 @@ class StatItem extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
+                    color: Colors.white,
                   ),
                 ),
               ],

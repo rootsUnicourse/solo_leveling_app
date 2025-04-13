@@ -43,14 +43,15 @@ class MissionItem extends StatelessWidget {
             width: mission.isCompleted ? 2 : 1,
           ),
         ),
+        color: Colors.grey.shade800,
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             gradient: mission.isCompleted
               ? LinearGradient(
                   colors: [
-                    Colors.green.withOpacity(0.1),
-                    Colors.transparent,
+                    Colors.green.withOpacity(0.3),
+                    Colors.grey.shade800,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -60,7 +61,7 @@ class MissionItem extends StatelessWidget {
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
-              backgroundColor: provider.getMissionTypeColor(mission.type).withOpacity(0.2),
+              backgroundColor: provider.getMissionTypeColor(mission.type).withOpacity(0.3),
               radius: 24,
               child: Icon(
                 provider.getMissionTypeIcon(mission.type),
@@ -76,7 +77,7 @@ class MissionItem extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                   decoration: mission.isCompleted ? TextDecoration.lineThrough : null,
-                  color: mission.isCompleted ? Colors.grey : Colors.black,
+                  color: mission.isCompleted ? Colors.grey : Colors.white,
                 ),
               ),
             ),
@@ -86,7 +87,7 @@ class MissionItem extends StatelessWidget {
                 Text(
                   mission.description,
                   style: TextStyle(
-                    color: mission.isCompleted ? Colors.grey : Colors.black87,
+                    color: mission.isCompleted ? Colors.grey : Colors.grey.shade300,
                     fontSize: 14,
                   ),
                 ),
@@ -103,7 +104,7 @@ class MissionItem extends StatelessWidget {
                       '${mission.xp} XP',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade900,
+                        color: Colors.amber,
                         fontSize: 14,
                       ),
                     ),
@@ -111,7 +112,7 @@ class MissionItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: provider.getMissionTypeColor(mission.type).withOpacity(0.2),
+                        color: provider.getMissionTypeColor(mission.type).withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(

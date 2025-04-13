@@ -42,7 +42,8 @@ class _AddMissionFormState extends State<AddMissionForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return Container(
+      color: Colors.grey.shade900,
       padding: const EdgeInsets.all(16.0),
       child: Form(
         key: _formKey,
@@ -55,17 +56,21 @@ class _AddMissionFormState extends State<AddMissionForm> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Mission Name',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.task),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.task),
+                labelStyle: TextStyle(color: Colors.grey.shade300),
+                filled: true,
+                fillColor: Colors.grey.shade800,
               ),
+              style: TextStyle(color: Colors.grey.shade200),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter a mission name';
@@ -76,11 +81,15 @@ class _AddMissionFormState extends State<AddMissionForm> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _descriptionController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Mission Description',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.description),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.description),
+                labelStyle: TextStyle(color: Colors.grey.shade300),
+                filled: true,
+                fillColor: Colors.grey.shade800,
               ),
+              style: TextStyle(color: Colors.grey.shade200),
               maxLines: 3,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -92,11 +101,15 @@ class _AddMissionFormState extends State<AddMissionForm> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _xpController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'XP (1-1000)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.star),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.star),
+                labelStyle: TextStyle(color: Colors.grey.shade300),
+                filled: true,
+                fillColor: Colors.grey.shade800,
               ),
+              style: TextStyle(color: Colors.grey.shade200),
               keyboardType: TextInputType.number,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -112,11 +125,16 @@ class _AddMissionFormState extends State<AddMissionForm> {
             const SizedBox(height: 16),
             DropdownButtonFormField<MissionType>(
               value: _selectedType,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Mission Type',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.category),
+                labelStyle: TextStyle(color: Colors.grey.shade300),
+                filled: true,
+                fillColor: Colors.grey.shade800,
               ),
+              dropdownColor: Colors.grey.shade800,
+              style: TextStyle(color: Colors.grey.shade200),
               items: MissionType.values.map((type) {
                 final provider = Provider.of<AppProvider>(context);
                 return DropdownMenuItem(
@@ -129,7 +147,10 @@ class _AddMissionFormState extends State<AddMissionForm> {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(type.toString().split('.').last),
+                      Text(
+                        type.toString().split('.').last,
+                        style: TextStyle(color: Colors.grey.shade200),
+                      ),
                     ],
                   ),
                 );
@@ -149,6 +170,8 @@ class _AddMissionFormState extends State<AddMissionForm> {
                 onPressed: _submitForm,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.all(12),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text(
                   'Add Mission',

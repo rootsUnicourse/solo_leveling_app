@@ -166,15 +166,53 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => AppProvider()..init(),
       child: MaterialApp(
-        title: 'Solo Leveling App',
+        title: 'Daily Quests',
         debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        darkTheme: ThemeData(
+          colorScheme: ColorScheme.dark(
+            primary: const Color(0xFF6200EA),
+            secondary: const Color(0xFF03DAC6),
+            surface: Colors.grey.shade900,
+            background: Colors.black,
+            error: Colors.red.shade400,
+          ),
+          scaffoldBackgroundColor: Colors.black,
+          canvasColor: Colors.black,
+          cardColor: Colors.grey.shade900,
+          dialogBackgroundColor: Colors.grey.shade900,
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          appBarTheme: const AppBarTheme(
+            centerTitle: true,
+            elevation: 0,
+            backgroundColor: Color(0xFF6200EA),
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF6200EA),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+          cardTheme: CardTheme(
+            elevation: 2,
+            color: Colors.grey.shade900,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF6200EA),
-            brightness: Brightness.light,
+            brightness: Brightness.dark,
           ),
           useMaterial3: true,
           fontFamily: 'Roboto',
+          scaffoldBackgroundColor: Colors.black,
           appBarTheme: const AppBarTheme(
             centerTitle: true,
             elevation: 0,
@@ -190,6 +228,7 @@ class MyApp extends StatelessWidget {
           ),
           cardTheme: CardTheme(
             elevation: 2,
+            color: Colors.grey.shade900,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
