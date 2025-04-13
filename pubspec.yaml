@@ -52,6 +52,7 @@ dependencies:
   
   # For generating unique IDs
   uuid: ^4.3.3
+  flutter_launcher_icons: ^0.14.3
 
 dev_dependencies:
   flutter_test:
@@ -113,3 +114,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+# Flutter launcher icons configuration
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo.jpeg"
+  min_sdk_android: 21
+  remove_alpha_ios: true
+  adaptive_icon_background: "#6200EA"
+  adaptive_icon_foreground: "assets/images/logo.jpeg"
+  web:
+    generate: false
+  windows:
+    generate: false
+  macos:
+    generate: false

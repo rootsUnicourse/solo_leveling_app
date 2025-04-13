@@ -9,109 +9,162 @@ import 'package:solo_leveling_app/providers/app_provider.dart';
 import 'package:solo_leveling_app/screens/dashboard_screen.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
 import 'dart:ui' show PlatformDispatcher;
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+
+// Keep track of whether we've registered adapters
+bool _adaptersRegistered = false;
+
+// We'll use regular boxes instead of lazy boxes to avoid conflicts
+bool _useRegularBoxes = true;
 
 void main() async {
-  runZonedGuarded(() async {
-    try {
-      // Important: Ensure bindings are initialized first
-      WidgetsFlutterBinding.ensureInitialized();
-      
-      // Configure error handlers
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.presentError(details);
-        debugPrint('Flutter error caught: ${details.exception}');
-      };
-      
-      PlatformDispatcher.instance.onError = (error, stack) {
-        debugPrint('Platform error caught: $error');
-        return true;
-      };
-
-      debugPrint('Starting Hive initialization...');
-      
-      try {
-        // Initialize Hive - only do this once
-        await Hive.initFlutter();
-        debugPrint('Hive.initFlutter completed');
-        
-        // Register the required adapters
-        registerAdapters();
-        
-        // Open the boxes - in the correct order
-        await openBoxes();
-        
-        // Initialize storage service after all setup
-        await StorageService.init();
-        
-        debugPrint('App initialization successful. Running app...');
-        runApp(const MyApp());
-      } catch (e, stack) {
-        debugPrint('Error during Hive initialization: $e');
-        debugPrint('Stack trace: $stack');
-        
-        if (!Hive.isBoxOpen('missionsBox') || !Hive.isBoxOpen('userBox')) {
-          debugPrint('Attempting recovery path...');
-          try {
-            await Hive.deleteFromDisk();
-            await Hive.initFlutter();
-            
-            registerAdapters();
-            await openBoxes();
-            await StorageService.init();
-            
-            runApp(const MyApp());
-          } catch (e) {
-            debugPrint('Fatal error during recovery: $e');
-            runApp(const ErrorApp());
-          }
-        } else {
-          runApp(const MyApp());
-        }
-      }
-    } catch (e, stack) {
-      debugPrint('Uncaught error during setup: $e');
-      debugPrint('Stack trace: $stack');
-      runApp(const ErrorApp());
+  // Ensure Flutter is initialized
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Basic error handling
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter error caught: ${details.exception}');
+  };
+  
+  try {
+    // Initialize Hive with default location
+    await Hive.initFlutter();
+    
+    // Register adapters
+    Hive.registerAdapter(MissionAdapter());
+    Hive.registerAdapter(UserAdapter());
+    Hive.registerAdapter(MissionTypeAdapter());
+    
+    // Open boxes
+    await Hive.openBox<Mission>('missionsBox');
+    await Hive.openBox<User>('userBox');
+    
+    // Create initial user if needed
+    final userBox = Hive.box<User>('userBox');
+    if (userBox.isEmpty) {
+      await userBox.put('currentUser', User.initial());
     }
-  }, (error, stackTrace) {
-    // Capture zone errors
-    debugPrint('ZonedGuarded caught error: $error');
-    debugPrint(stackTrace.toString());
-  });
+    
+    // Run app
+    runApp(const MyApp());
+  } catch (e) {
+    debugPrint('Error during initialization: $e');
+    
+    // Fallback to minimal app
+    runApp(const ErrorApp());
+  }
 }
 
-void registerAdapters() {
+Future<void> registerAdapters() async {
+  debugPrint('Checking adapter registration...');
+  
+  // Skip if already registered in this session
+  if (_adaptersRegistered) {
+    debugPrint('Adapters already registered in this session, skipping');
+    return;
+  }
+  
   debugPrint('Registering adapters...');
-  if (!Hive.isAdapterRegistered(2)) {
-    Hive.registerAdapter(MissionTypeAdapter());
+  try {
+    // Try-catch each adapter registration separately
+    try {
+      if (!Hive.isAdapterRegistered(2)) {
+        Hive.registerAdapter(MissionTypeAdapter());
+        debugPrint('Registered MissionTypeAdapter');
+      }
+    } catch (e) {
+      debugPrint('Error registering MissionTypeAdapter: $e');
+    }
+    
+    try {
+      if (!Hive.isAdapterRegistered(0)) {
+        Hive.registerAdapter(MissionAdapter());
+        debugPrint('Registered MissionAdapter');
+      }
+    } catch (e) {
+      debugPrint('Error registering MissionAdapter: $e');
+    }
+    
+    try {
+      if (!Hive.isAdapterRegistered(1)) {
+        Hive.registerAdapter(UserAdapter());
+        debugPrint('Registered UserAdapter');
+      }
+    } catch (e) {
+      debugPrint('Error registering UserAdapter: $e');
+    }
+    
+    _adaptersRegistered = true;
+    debugPrint('Adapters registered successfully');
+  } catch (e) {
+    debugPrint('General error during adapter registration: $e');
+    rethrow;
   }
-  if (!Hive.isAdapterRegistered(0)) {
-    Hive.registerAdapter(MissionAdapter());
-  }
-  if (!Hive.isAdapterRegistered(1)) {
-    Hive.registerAdapter(UserAdapter());
-  }
-  debugPrint('Adapters registered successfully');
 }
 
 Future<void> openBoxes() async {
   debugPrint('Opening Hive boxes...');
   try {
-    if (!Hive.isBoxOpen('missionsBox')) {
+    // Close any open boxes first to avoid conflicts
+    await Hive.close();
+    
+    // Open boxes consistently using the same type
+    if (_useRegularBoxes) {
+      debugPrint('Using regular boxes');
       await Hive.openBox<Mission>('missionsBox');
-    }
-    if (!Hive.isBoxOpen('userBox')) {
       await Hive.openBox<User>('userBox');
+    } else {
+      debugPrint('Using lazy boxes');
+      await Hive.openLazyBox<Mission>('missionsBox');
+      await Hive.openLazyBox<User>('userBox');
     }
+    
+    // Initialize user if needed
+    if (_useRegularBoxes) {
+      final userBox = Hive.box<User>('userBox');
+      if (!userBox.containsKey('currentUser')) {
+        debugPrint('Creating initial user');
+        await userBox.put('currentUser', User.initial());
+      }
+    } else {
+      final userBox = Hive.lazyBox<User>('userBox');
+      if (!(await userBox.containsKey('currentUser'))) {
+        debugPrint('Creating initial user');
+        await userBox.put('currentUser', User.initial());
+      }
+    }
+    
     debugPrint('Boxes opened successfully');
   } catch (e) {
-    debugPrint('Error opening boxes, trying to recreate them: $e');
-    // If boxes are corrupted, try to delete and recreate them
-    await Hive.deleteBoxFromDisk('missionsBox');
-    await Hive.deleteBoxFromDisk('userBox');
+    debugPrint('Error opening boxes: $e');
     
-    await Hive.openBox<Mission>('missionsBox');
-    await Hive.openBox<User>('userBox');
+    // Try recovery
+    try {
+      // Delete box files
+      await Hive.deleteBoxFromDisk('missionsBox');
+      await Hive.deleteBoxFromDisk('userBox');
+      
+      // Wait a moment
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Try again with regular boxes
+      _useRegularBoxes = true;
+      await Hive.openBox<Mission>('missionsBox');
+      await Hive.openBox<User>('userBox');
+      
+      // Initialize user
+      final userBox = Hive.box<User>('userBox');
+      if (!userBox.containsKey('currentUser')) {
+        await userBox.put('currentUser', User.initial());
+      }
+      
+      debugPrint('Box recovery successful');
+    } catch (e) {
+      debugPrint('Fatal error during box recovery: $e');
+      rethrow;
+    }
   }
 }
 

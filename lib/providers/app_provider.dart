@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:solo_leveling_app/models/mission.dart';
 import 'package:solo_leveling_app/models/user.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
+import 'package:solo_leveling_app/widgets/mission_complete_effect.dart';
 import 'package:uuid/uuid.dart';
 import 'package:hive/hive.dart';
 
@@ -22,11 +23,36 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Load user and missions
-      await _loadUser();
-      await _loadAllMissions();
+      // Try to initialize StorageService
+      try {
+        await StorageService.init();
+      } catch (e) {
+        debugPrint('Storage service init failed: $e');
+        // Continue with fallbacks
+      }
+      
+      // Load user with fallback
+      try {
+        await _loadUser();
+      } catch (e) {
+        debugPrint('User loading failed: $e');
+        _user = User.initial();
+      }
+      
+      // Load missions with fallback
+      try {
+        await _loadAllMissions();
+      } catch (e) {
+        debugPrint('Missions loading failed: $e');
+        _activeMissions = [];
+        _completedMissions = [];
+      }
     } catch (e) {
       debugPrint('Error initializing app: $e');
+      // Ensure we have at least default values
+      _user = _user ?? User.initial();
+      _activeMissions = _activeMissions.isNotEmpty ? _activeMissions : [];
+      _completedMissions = _completedMissions.isNotEmpty ? _completedMissions : [];
     }
 
     _isLoading = false;
@@ -80,12 +106,79 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Complete a mission
-  Future<void> completeMission(String missionId) async {
-    await StorageService.completeMission(missionId);
-    
-    // Reload user and missions to reflect changes
-    await _loadUser();
-    await _loadAllMissions();
+  Future<void> completeMission(String missionId, [BuildContext? context]) async {
+    try {
+      // Find the mission first to get its details
+      final mission = _activeMissions.firstWhere(
+        (m) => m.id == missionId,
+        orElse: () => throw Exception('Mission not found'),
+      );
+      
+      // First complete the mission in storage
+      await StorageService.completeMission(missionId);
+      
+      // Show completion effect if context is provided and valid
+      if (context != null) {
+        try {
+          // Only show the effect if the context is still mounted
+          if (ModalRoute.of(context) != null && ModalRoute.of(context)!.isCurrent) {
+            final statType = mission.type.toString().split('.').last;
+            final statColor = getMissionTypeColor(mission.type);
+            
+            // Show the completion effect
+            MissionCompleteEffect.show(
+              context,
+              mission.xp,
+              statType,
+              statColor,
+            );
+          }
+        } catch (e) {
+          debugPrint('Error showing mission completion effect: $e');
+          // Continue with user data updates even if effect fails
+        }
+      }
+      
+      // Reload user and missions to reflect changes
+      await _loadUser();
+      await _loadAllMissions();
+    } catch (e) {
+      debugPrint('Error in completeMission: $e');
+      
+      // Try to complete mission without showing effects
+      try {
+        await StorageService.completeMission(missionId);
+        await _loadUser();
+        await _loadAllMissions();
+      } catch (innerError) {
+        debugPrint('Secondary error in completeMission: $innerError');
+        rethrow;
+      }
+    }
+  }
+
+  // Directly complete a quick mission from popup
+  Future<void> completeQuickMission(Mission mission, BuildContext? context) async {
+    try {
+      // First save the mission
+      await StorageService.saveMission(mission);
+      
+      // Then complete it - but only show effects if context is valid
+      if (context != null && ModalRoute.of(context) != null && ModalRoute.of(context)!.isCurrent) {
+        await completeMission(mission.id, context);
+      } else {
+        // Complete without visual effects
+        await completeMission(mission.id);
+      }
+    } catch (e) {
+      debugPrint('Error completing quick mission: $e');
+      // Try minimal completion approach
+      try {
+        await StorageService.completeMission(mission.id);
+        await _loadUser();
+        await _loadAllMissions();
+      } catch (_) {}
+    }
   }
 
   // Get the appropriate mission type icon

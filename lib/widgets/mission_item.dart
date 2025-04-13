@@ -22,7 +22,7 @@ class MissionItem extends StatelessWidget {
         children: [
           SlidableAction(
             onPressed: (_) {
-              provider.completeMission(mission.id);
+              provider.completeMission(mission.id, context);
             },
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
@@ -136,7 +136,7 @@ class MissionItem extends StatelessWidget {
               value: mission.isCompleted,
               onChanged: (value) {
                 if (value == true && !mission.isCompleted) {
-                  provider.completeMission(mission.id);
+                  provider.completeMission(mission.id, context);
                 }
               },
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:provider/provider.dart';
+import 'dart:math';
 import 'package:solo_leveling_app/models/mission.dart';
 import 'package:solo_leveling_app/providers/app_provider.dart';
 import 'package:solo_leveling_app/widgets/add_mission_form.dart';
@@ -8,6 +9,7 @@ import 'package:solo_leveling_app/widgets/mission_item.dart';
 import 'package:solo_leveling_app/widgets/stat_item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
+import 'package:solo_leveling_app/widgets/quick_mission_popup.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -17,6 +19,22 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Delay to ensure the context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowQuickMission();
+    });
+  }
+
+  void _maybeShowQuickMission() {
+    // Show quick mission randomly (30% chance)
+    if (Random().nextDouble() < 0.3) {
+      QuickMissionPopup.show(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
