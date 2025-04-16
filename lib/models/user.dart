@@ -66,9 +66,9 @@ class User {
   }
 
   // Add stat points based on mission type and XP
-  void addStatPoints(String statType, int xp) {
-    // 1 stat point per 100 XP
-    int statPoints = xp ~/ 100;
+  void addStatPoints(String statType, int xp, {int extraPoints = 0}) {
+    // 1 stat point per 100 XP, plus any extra points
+    int statPoints = (xp ~/ 100) + extraPoints;
     stats[statType] = (stats[statType] ?? 0) + statPoints;
   }
 

@@ -40,6 +40,7 @@ void main() async {
     // Open boxes
     await Hive.openBox<Mission>('missionsBox');
     await Hive.openBox<User>('userBox');
+    await Hive.openBox('settingsBox'); // Box for app settings
     
     // Create initial user if needed
     final userBox = Hive.box<User>('userBox');

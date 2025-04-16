@@ -10,6 +10,7 @@ class StorageService {
   static const String missionsBoxName = 'missionsBox';
   static const String currentUserKey = 'currentUser';
   static const String lastResetKey = 'lastDailyReset';
+  static const String firstTimeOpenKey = 'firstTimeOpen';
   
   // Keep track of initialization state
   static bool _initialized = false;
@@ -48,15 +49,59 @@ class StorageService {
     }
   }
   
+  // Check if this is the first time opening the app
+  static Future<bool> isFirstTimeOpen() async {
+    try {
+      await init(); // Make sure storage is initialized
+      
+      // Use a separate box for first time tracking to avoid conflicts
+      if (!Hive.isBoxOpen('settingsBox')) {
+        await Hive.openBox('settingsBox');
+      }
+      
+      final settingsBox = Hive.box('settingsBox');
+      final isFirstTime = settingsBox.get(firstTimeOpenKey, defaultValue: true) as bool;
+      
+      return isFirstTime;
+    } catch (e) {
+      debugPrint('Error checking first time open status: $e');
+      return true; // Default to true if there's an error
+    }
+  }
+  
+  // Mark app as opened (no longer first time)
+  static Future<void> markAppOpened() async {
+    try {
+      await init(); // Make sure storage is initialized
+      
+      // Use a separate box for first time tracking to avoid conflicts
+      if (!Hive.isBoxOpen('settingsBox')) {
+        await Hive.openBox('settingsBox');
+      }
+      
+      final settingsBox = Hive.box('settingsBox');
+      await settingsBox.put(firstTimeOpenKey, false);
+      
+      debugPrint('App marked as opened');
+    } catch (e) {
+      debugPrint('Error marking app as opened: $e');
+    }
+  }
+  
   // Check if we need to reset daily missions
   static Future<void> _checkAndResetDailyMissions() async {
     try {
-      final userBox = Hive.box(userBoxName); // Use a regular box for primitive types
+      // Use the settings box for tracking reset time
+      if (!Hive.isBoxOpen('settingsBox')) {
+        await Hive.openBox('settingsBox');
+      }
+      
+      final settingsBox = Hive.box('settingsBox');
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       
       // Get the last reset date
-      final lastResetMillis = userBox.get(lastResetKey, defaultValue: 0) as int;
+      final lastResetMillis = settingsBox.get(lastResetKey, defaultValue: 0) as int;
       final lastReset = DateTime.fromMillisecondsSinceEpoch(lastResetMillis);
       final lastResetDay = DateTime(lastReset.year, lastReset.month, lastReset.day);
       
@@ -64,7 +109,7 @@ class StorageService {
       if (lastResetDay.isBefore(today)) {
         await _resetDailyMissions();
         // Update the last reset time
-        await userBox.put(lastResetKey, now.millisecondsSinceEpoch);
+        await settingsBox.put(lastResetKey, now.millisecondsSinceEpoch);
         debugPrint('Daily missions reset at ${now.toIso8601String()}');
       }
     } catch (e) {
@@ -369,7 +414,17 @@ class StorageService {
         // Update user stats
         final user = await getUser();
         user.addXp(mission.xp);
-        user.addStatPoints(mission.type.toString().split('.').last, mission.xp);
+        
+        // Check if this is a quick mission (starting with 'quick_')
+        if (missionId.startsWith('quick_')) {
+          // For quick missions, add fixed amount of stat points (reduced from 5 to 2)
+          user.addStatPoints(mission.type.toString().split('.').last, mission.xp, extraPoints: 2);
+          debugPrint('Added extra stat points for quick mission');
+        } else {
+          // Regular missions use the normal calculation
+          user.addStatPoints(mission.type.toString().split('.').last, mission.xp);
+        }
+        
         await saveUser(user);
         debugPrint('Mission completed and user updated');
       } else {

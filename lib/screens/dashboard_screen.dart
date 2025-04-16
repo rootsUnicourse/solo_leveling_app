@@ -10,6 +10,7 @@ import 'package:solo_leveling_app/widgets/stat_item.dart';
 import 'package:flutter/foundation.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
 import 'package:solo_leveling_app/widgets/quick_mission_popup.dart';
+import 'package:solo_leveling_app/widgets/welcome_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -24,8 +25,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     // Delay to ensure the context is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _maybeShowQuickMission();
+      _checkFirstTimeAndShowWelcome();
     });
+  }
+  
+  Future<void> _checkFirstTimeAndShowWelcome() async {
+    // First check if it's the first time opening the app
+    await WelcomeDialog.checkAndShow(context);
+    
+    // Then maybe show quick mission (only if user accepted the welcome)
+    if (mounted) {
+      _maybeShowQuickMission();
+    }
   }
 
   void _maybeShowQuickMission() {

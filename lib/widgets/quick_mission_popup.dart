@@ -105,26 +105,15 @@ class QuickMissionPopup extends StatelessWidget {
                       const SizedBox(height: 32),
                       
                       // Mission text
-                      RichText(
-                        textAlign: TextAlign.center,
-                        text: TextSpan(
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 18,
-                            height: 1.5,
-                          ),
-                          children: [
-                            const TextSpan(text: 'You have acquired the qualifications\nto be a '),
-                            TextSpan(
-                              text: 'Player',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const TextSpan(text: '. Will you accept?'),
-                          ],
+                      Text(
+                        'QUICK MISSION AVAILABLE',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
                         ),
+                        textAlign: TextAlign.center,
                       ),
                       
                       const SizedBox(height: 32),
@@ -173,8 +162,11 @@ class QuickMissionPopup extends StatelessWidget {
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                            // Wrap the rewards in a Wrap widget to handle overflow
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 8.0,
+                              runSpacing: 8.0,
                               children: [
                                 _buildRewardChip(
                                   context, 
@@ -182,12 +174,17 @@ class QuickMissionPopup extends StatelessWidget {
                                   Provider.of<AppProvider>(context).getMissionTypeIcon(quickMission.type),
                                   Provider.of<AppProvider>(context).getMissionTypeColor(quickMission.type),
                                 ),
-                                const SizedBox(width: 12),
                                 _buildRewardChip(
                                   context, 
                                   '${quickMission.xp} XP',
                                   Icons.star,
                                   Colors.amber,
+                                ),
+                                _buildRewardChip(
+                                  context, 
+                                  '+2 Stats',
+                                  Icons.trending_up,
+                                  Colors.green,
                                 ),
                               ],
                             ),
@@ -326,7 +323,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_1',
         name: 'Drink a Glass of Water',
         description: 'Hydrate yourself. Your body needs water to function properly.',
-        xp: 10,
+        xp: 50,
         type: MissionType.discipline,
         createdAt: DateTime.now(),
       ),
@@ -334,7 +331,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_2',
         name: 'Do 20 Push-ups',
         description: 'Strengthen your upper body and core with this quick exercise.',
-        xp: 30,
+        xp: 100,
         type: MissionType.strength,
         createdAt: DateTime.now(),
       ),
@@ -342,7 +339,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_3',
         name: '5-Minute Meditation',
         description: 'Take a moment to clear your mind and focus on your breathing.',
-        xp: 20,
+        xp: 75,
         type: MissionType.willpower,
         createdAt: DateTime.now(),
       ),
@@ -350,7 +347,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_4',
         name: 'Take a Brief Walk',
         description: 'Get up and move around for 5 minutes to boost your circulation.',
-        xp: 15,
+        xp: 60,
         type: MissionType.endurance,
         createdAt: DateTime.now(),
       ),
@@ -358,7 +355,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_5',
         name: 'Quick Brain Teaser',
         description: 'Solve a riddle or puzzle to exercise your mind.',
-        xp: 25,
+        xp: 90,
         type: MissionType.intelligence,
         createdAt: DateTime.now(),
       ),
@@ -366,7 +363,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_6',
         name: '30-Second Plank',
         description: 'Hold a plank position for 30 seconds to strengthen your core.',
-        xp: 20,
+        xp: 80,
         type: MissionType.strength,
         createdAt: DateTime.now(),
       ),
@@ -374,7 +371,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_7',
         name: 'Stretch Break',
         description: 'Take a minute to stretch your muscles and improve flexibility.',
-        xp: 15,
+        xp: 70,
         type: MissionType.agility,
         createdAt: DateTime.now(),
       ),
@@ -382,7 +379,7 @@ class QuickMissionPopup extends StatelessWidget {
         id: 'quick_8',
         name: 'Clear Notifications',
         description: 'Check and clear notifications on your devices to stay organized.',
-        xp: 10,
+        xp: 55,
         type: MissionType.discipline,
         createdAt: DateTime.now(),
       ),
