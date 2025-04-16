@@ -349,7 +349,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           Divider(height: 24, color: Colors.grey.shade700),
-          if (provider.activeMissions.isEmpty)
+          
+          // Daily Missions Section
+          if (provider.dailyMissions.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Daily Repeating',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.amber,
+                ),
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: provider.dailyMissions.length,
+              itemBuilder: (context, index) {
+                return MissionItem(
+                  mission: provider.dailyMissions[index],
+                );
+              },
+            ),
+            Divider(height: 24, color: Colors.grey.shade700),
+          ],
+          
+          // One-time Missions Section
+          if (provider.activeMissions.isNotEmpty) ...[
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'One-time',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: provider.activeMissions.length,
+              itemBuilder: (context, index) {
+                return MissionItem(
+                  mission: provider.activeMissions[index],
+                );
+              },
+            ),
+          ] else if (provider.dailyMissions.isEmpty) 
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(32.0),
@@ -380,17 +430,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ],
                 ),
               ),
-            )
-          else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: provider.activeMissions.length,
-              itemBuilder: (context, index) {
-                return MissionItem(
-                  mission: provider.activeMissions[index],
-                );
-              },
             ),
         ],
       ),

@@ -16,6 +16,7 @@ class _AddMissionScreenState extends State<AddMissionScreen> {
   final _descriptionController = TextEditingController();
   final _xpController = TextEditingController();
   MissionType _selectedType = MissionType.strength;
+  bool _isDaily = false;
   bool _isSubmitting = false;
 
   @override
@@ -117,7 +118,11 @@ class _AddMissionScreenState extends State<AddMissionScreen> {
 
               // Mission type selection
               _buildMissionTypeSelector(provider),
-              const SizedBox(height: 32.0),
+              const SizedBox(height: 24.0),
+              
+              // Daily mission toggle
+              _buildDailyMissionToggle(),
+              const SizedBox(height: 24.0),
 
               // Submit button
               ElevatedButton(
@@ -134,9 +139,9 @@ class _AddMissionScreenState extends State<AddMissionScreen> {
                 ),
                 child: _isSubmitting
                   ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'CREATE MISSION',
-                      style: TextStyle(
+                  : Text(
+                      _isDaily ? 'CREATE DAILY MISSION' : 'CREATE MISSION',
+                      style: const TextStyle(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
                       ),
@@ -214,6 +219,53 @@ class _AddMissionScreenState extends State<AddMissionScreen> {
     );
   }
 
+  // Build the daily mission toggle switch
+  Widget _buildDailyMissionToggle() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: Colors.grey.shade700),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Daily Mission',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                'Resets at midnight every day',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: Colors.grey.shade400,
+                ),
+              ),
+            ],
+          ),
+          Switch(
+            value: _isDaily,
+            onChanged: (value) {
+              setState(() {
+                _isDaily = value;
+              });
+            },
+            activeColor: Colors.amber,
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _submitMission(BuildContext context, AppProvider provider) async {
     // Validate form
     if (!_formKey.currentState!.validate()) {
@@ -234,13 +286,16 @@ class _AddMissionScreenState extends State<AddMissionScreen> {
         description: _descriptionController.text.trim(),
         xp: xp,
         type: _selectedType,
+        isDaily: _isDaily,
       );
 
       // Success - go back to previous screen
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Mission created successfully!'),
+            content: Text(_isDaily 
+              ? 'Daily mission created! It will reset at midnight.'
+              : 'Mission created successfully!'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(

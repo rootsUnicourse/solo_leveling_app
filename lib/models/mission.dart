@@ -33,6 +33,9 @@ class Mission {
 
   @HiveField(6)
   bool isCompleted;
+  
+  @HiveField(7)
+  final bool isDaily;
 
   Mission({
     required this.id,
@@ -42,6 +45,7 @@ class Mission {
     required this.type,
     required this.createdAt,
     this.isCompleted = false,
+    this.isDaily = false,
   });
 
   Mission copyWith({
@@ -52,6 +56,7 @@ class Mission {
     MissionType? type,
     DateTime? createdAt,
     bool? isCompleted,
+    bool? isDaily,
   }) {
     return Mission(
       id: id ?? this.id,
@@ -61,6 +66,7 @@ class Mission {
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
       isCompleted: isCompleted ?? this.isCompleted,
+      isDaily: isDaily ?? this.isDaily,
     );
   }
 } 

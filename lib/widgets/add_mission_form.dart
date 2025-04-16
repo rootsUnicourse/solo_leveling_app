@@ -16,6 +16,7 @@ class _AddMissionFormState extends State<AddMissionForm> {
   final _descriptionController = TextEditingController();
   final _xpController = TextEditingController();
   MissionType _selectedType = MissionType.strength;
+  bool _isDaily = false;
 
   @override
   void dispose() {
@@ -34,6 +35,7 @@ class _AddMissionFormState extends State<AddMissionForm> {
         description: _descriptionController.text.trim(),
         xp: int.parse(_xpController.text.trim()),
         type: _selectedType,
+        isDaily: _isDaily,
       );
 
       Navigator.of(context).pop();
@@ -163,6 +165,33 @@ class _AddMissionFormState extends State<AddMissionForm> {
                 }
               },
             ),
+            const SizedBox(height: 16),
+            SwitchListTile(
+              title: const Text(
+                'Daily Mission',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              subtitle: const Text(
+                'Resets at midnight every day',
+                style: TextStyle(color: Colors.grey),
+              ),
+              value: _isDaily,
+              onChanged: (value) {
+                setState(() {
+                  _isDaily = value;
+                });
+              },
+              activeColor: Colors.amber,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: BorderSide(color: Colors.grey.shade700),
+              ),
+              tileColor: Colors.grey.shade800,
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
@@ -173,9 +202,9 @@ class _AddMissionFormState extends State<AddMissionForm> {
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text(
-                  'Add Mission',
-                  style: TextStyle(fontSize: 16),
+                child: Text(
+                  _isDaily ? 'Add Daily Mission' : 'Add Mission',
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
             ),

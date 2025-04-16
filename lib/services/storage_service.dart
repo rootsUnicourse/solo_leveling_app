@@ -9,6 +9,7 @@ class StorageService {
   static const String userBoxName = 'userBox';
   static const String missionsBoxName = 'missionsBox';
   static const String currentUserKey = 'currentUser';
+  static const String lastResetKey = 'lastDailyReset';
   
   // Keep track of initialization state
   static bool _initialized = false;
@@ -37,10 +38,62 @@ class StorageService {
         await box.put(currentUserKey, User.initial());
       }
       
+      // Check if we need to reset daily missions
+      await _checkAndResetDailyMissions();
+      
       _initialized = true;
     } catch (e) {
       debugPrint('Error in StorageService.init: $e');
       // Do not throw, let the app continue even if storage fails
+    }
+  }
+  
+  // Check if we need to reset daily missions
+  static Future<void> _checkAndResetDailyMissions() async {
+    try {
+      final userBox = Hive.box(userBoxName); // Use a regular box for primitive types
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      
+      // Get the last reset date
+      final lastResetMillis = userBox.get(lastResetKey, defaultValue: 0) as int;
+      final lastReset = DateTime.fromMillisecondsSinceEpoch(lastResetMillis);
+      final lastResetDay = DateTime(lastReset.year, lastReset.month, lastReset.day);
+      
+      // If last reset was before today, reset daily missions
+      if (lastResetDay.isBefore(today)) {
+        await _resetDailyMissions();
+        // Update the last reset time
+        await userBox.put(lastResetKey, now.millisecondsSinceEpoch);
+        debugPrint('Daily missions reset at ${now.toIso8601String()}');
+      }
+    } catch (e) {
+      debugPrint('Error checking daily missions reset: $e');
+    }
+  }
+  
+  // Reset all daily missions
+  static Future<void> _resetDailyMissions() async {
+    try {
+      final box = Hive.box<Mission>(missionsBoxName);
+      
+      // Get all missions
+      final allMissions = box.values.toList();
+      
+      // Reset completed status for daily missions
+      for (var mission in allMissions) {
+        if (mission.isDaily && mission.isCompleted) {
+          final resetMission = mission.copyWith(
+            isCompleted: false,
+            // Update the created date to today so it shows in today's missions
+            createdAt: DateTime.now(),
+          );
+          await box.put(mission.id, resetMission);
+        }
+      }
+      debugPrint('Daily missions have been reset');
+    } catch (e) {
+      debugPrint('Error resetting daily missions: $e');
     }
   }
 
@@ -357,6 +410,39 @@ class StorageService {
       
       // Try initializing again
       await init();
+    }
+  }
+
+  // Get daily missions only
+  static Future<List<Mission>> getDailyMissions() async {
+    try {
+      if (!_initialized) {
+        await init();
+      }
+      
+      final box = _getMissionsBox();
+      
+      // Safety check for corrupted data
+      if (box.isEmpty) {
+        debugPrint('Missions box is empty');
+        return [];
+      }
+      
+      // Get all missions as a list first
+      final allMissions = box.values.toList();
+      
+      // Filter only daily missions
+      final List<Mission> dailyMissions = allMissions
+          .where((mission) => mission.isDaily)
+          .toList();
+      
+      // Sort by date
+      dailyMissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      return dailyMissions;
+    } catch (e) {
+      debugPrint('Error getting daily missions: $e');
+      return [];
     }
   }
 } 

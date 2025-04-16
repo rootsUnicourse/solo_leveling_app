@@ -24,13 +24,14 @@ class MissionAdapter extends TypeAdapter<Mission> {
       type: fields[4] as MissionType,
       createdAt: fields[5] as DateTime,
       isCompleted: fields[6] as bool,
+      isDaily: fields.containsKey(7) ? fields[7] as bool : false,
     );
   }
 
   @override
   void write(BinaryWriter writer, Mission obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class MissionAdapter extends TypeAdapter<Mission> {
       ..writeByte(5)
       ..write(obj.createdAt)
       ..writeByte(6)
-      ..write(obj.isCompleted);
+      ..write(obj.isCompleted)
+      ..writeByte(7)
+      ..write(obj.isDaily);
   }
 
   @override

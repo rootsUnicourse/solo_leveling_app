@@ -10,11 +10,13 @@ class AppProvider extends ChangeNotifier {
   User? _user;
   List<Mission> _activeMissions = [];
   List<Mission> _completedMissions = [];
+  List<Mission> _dailyMissions = [];
   bool _isLoading = true;
 
   User? get user => _user;
   List<Mission> get activeMissions => _activeMissions;
   List<Mission> get completedMissions => _completedMissions;
+  List<Mission> get dailyMissions => _dailyMissions;
   bool get isLoading => _isLoading;
 
   // Initialize the provider
@@ -42,10 +44,12 @@ class AppProvider extends ChangeNotifier {
       // Load missions with fallback
       try {
         await _loadAllMissions();
+        await _loadDailyMissions();
       } catch (e) {
         debugPrint('Missions loading failed: $e');
         _activeMissions = [];
         _completedMissions = [];
+        _dailyMissions = [];
       }
     } catch (e) {
       debugPrint('Error initializing app: $e');
@@ -53,6 +57,7 @@ class AppProvider extends ChangeNotifier {
       _user = _user ?? User.initial();
       _activeMissions = _activeMissions.isNotEmpty ? _activeMissions : [];
       _completedMissions = _completedMissions.isNotEmpty ? _completedMissions : [];
+      _dailyMissions = _dailyMissions.isNotEmpty ? _dailyMissions : [];
     }
 
     _isLoading = false;
@@ -73,9 +78,15 @@ class AppProvider extends ChangeNotifier {
     allMissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     
     // Separate active and completed missions
-    _activeMissions = allMissions.where((mission) => !mission.isCompleted).toList();
-    _completedMissions = allMissions.where((mission) => mission.isCompleted).toList();
+    _activeMissions = allMissions.where((mission) => !mission.isCompleted && !mission.isDaily).toList();
+    _completedMissions = allMissions.where((mission) => mission.isCompleted && !mission.isDaily).toList();
     
+    notifyListeners();
+  }
+  
+  // Load daily missions
+  Future<void> _loadDailyMissions() async {
+    _dailyMissions = await StorageService.getDailyMissions();
     notifyListeners();
   }
 
@@ -85,6 +96,7 @@ class AppProvider extends ChangeNotifier {
     required String description,
     required int xp,
     required MissionType type,
+    bool isDaily = false,
   }) async {
     final mission = Mission(
       id: const Uuid().v4(),
@@ -93,6 +105,7 @@ class AppProvider extends ChangeNotifier {
       xp: xp,
       type: type,
       createdAt: DateTime.now(),
+      isDaily: isDaily,
     );
 
     // Save mission to storage
@@ -100,9 +113,10 @@ class AppProvider extends ChangeNotifier {
     
     // Reload missions from storage to ensure consistency
     await _loadAllMissions();
+    await _loadDailyMissions();
     
     // Debug
-    debugPrint('Added mission: ${mission.name}, total active missions: ${_activeMissions.length}');
+    debugPrint('Added mission: ${mission.name}, isDaily: $isDaily, total active missions: ${_activeMissions.length}');
   }
 
   // Complete a mission
