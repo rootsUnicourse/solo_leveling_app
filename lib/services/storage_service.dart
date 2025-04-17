@@ -545,4 +545,34 @@ class StorageService {
       return false;
     }
   }
+  
+  // Set the user's hunter image for a specific level
+  static Future<bool> setUserHunterImage(String sourcePath, int level) async {
+    try {
+      // Get the application documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      final String userImagesPath = '${appDir.path}/user_images';
+      
+      // Create the directory if it doesn't exist
+      final dir = Directory(userImagesPath);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      
+      // Set the target path for the image
+      final String targetPath = '$userImagesPath/user_level_$level.jpg';
+      
+      // Copy the image to the target path
+      await File(sourcePath).copy(targetPath);
+      
+      // Update the user's custom image status
+      await updateUserCustomImageStatus(true);
+      
+      debugPrint('Set user hunter image for level $level: $targetPath');
+      return true;
+    } catch (e) {
+      debugPrint('Error setting user hunter image: $e');
+      return false;
+    }
+  }
 } 

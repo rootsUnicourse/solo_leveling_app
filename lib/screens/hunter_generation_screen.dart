@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:solo_leveling_app/services/ai_image_service.dart';
 import 'package:solo_leveling_app/screens/hunter_profile_screen.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
+import 'package:solo_leveling_app/services/background_image_service.dart';
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class HunterGenerationScreen extends StatefulWidget {
   final String faceImagePath;
@@ -69,7 +71,22 @@ class _HunterGenerationScreenState extends State<HunterGenerationScreen> {
 
     try {
       final String selectedImagePath = _generatedImages[_selectedImageIndex!];
-      await StorageService.updateUserCustomImageStatus(true);
+      
+      // Use the new method to set the user's hunter image
+      final success = await StorageService.setUserHunterImage(selectedImagePath, 1);
+      
+      if (!success) {
+        throw Exception('Failed to set user hunter image');
+      }
+      
+      // Get the path to the saved image
+      final directory = await getApplicationDocumentsDirectory();
+      final String targetPath = '${directory.path}/user_images/user_level_1.jpg';
+      
+      // Initialize and start background image generation
+      await BackgroundImageService.initializeBackgroundGeneration(widget.faceImagePath);
+      BackgroundImageService.startBackgroundGeneration();
+      
       if (!mounted) return;
       
       Navigator.pushReplacement(
@@ -77,7 +94,7 @@ class _HunterGenerationScreenState extends State<HunterGenerationScreen> {
         MaterialPageRoute(
           builder: (context) => HunterProfileScreen(
             faceImagePath: widget.faceImagePath,
-            hunterImagePath: selectedImagePath,
+            hunterImagePath: targetPath,
           ),
         ),
       );

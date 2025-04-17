@@ -12,6 +12,7 @@ import 'package:solo_leveling_app/services/storage_service.dart';
 import 'package:solo_leveling_app/widgets/quick_mission_popup.dart';
 import 'package:solo_leveling_app/widgets/welcome_dialog.dart';
 import 'dart:io';
+import 'package:solo_leveling_app/services/background_image_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -21,6 +22,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  int _currentDisplayLevel = 1; // Track the current level being displayed
+  final List<int> _availableLevels = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
+
   @override
   void initState() {
     super.initState();
@@ -177,31 +181,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: FutureBuilder<String>(
-                    future: user.getCharacterImagePath(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Container(
-                          color: Colors.grey.withOpacity(0.3),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      } else if (snapshot.hasError || !snapshot.hasData) {
-                        debugPrint('Error loading image: ${snapshot.error}');
-                        return Container(
-                          color: Colors.grey.withOpacity(0.3),
-                          child: Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white.withOpacity(0.8),
-                          ),
-                        );
-                      } else {
+              child: GestureDetector(
+                onTap: () async {
+                  // Find the next available level
+                  int currentIndex = _availableLevels.indexOf(_currentDisplayLevel);
+                  int nextIndex = (currentIndex + 1) % _availableLevels.length;
+                  
+                  // Check if the next level's image exists
+                  bool hasNextImage = await BackgroundImageService.hasImagesForLevel(_availableLevels[nextIndex]);
+                  
+                  if (hasNextImage) {
+                    setState(() {
+                      _currentDisplayLevel = _availableLevels[nextIndex];
+                    });
+                  } else {
+                    // If next level doesn't exist, try to find the next available one
+                    for (int i = 0; i < _availableLevels.length; i++) {
+                      int checkIndex = (nextIndex + i) % _availableLevels.length;
+                      if (await BackgroundImageService.hasImagesForLevel(_availableLevels[checkIndex])) {
+                        setState(() {
+                          _currentDisplayLevel = _availableLevels[checkIndex];
+                        });
+                        break;
+                      }
+                    }
+                  }
+                },
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: FutureBuilder<String>(
+                      future: user.getCharacterImagePathForLevel(_currentDisplayLevel),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return Container(
+                            color: Colors.grey.withOpacity(0.3),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        } else if (snapshot.hasError || !snapshot.hasData) {
+                          debugPrint('Error loading image: ${snapshot.error}');
+                          return Container(
+                            color: Colors.grey.withOpacity(0.3),
+                            child: Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          );
+                        }
+                        
                         final imagePath = snapshot.data!;
                         
                         if (imagePath.startsWith('assets/')) {
@@ -239,8 +270,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             },
                           );
                         }
-                      }
-                    },
+                      },
+                    ),
                   ),
                 ),
               ),

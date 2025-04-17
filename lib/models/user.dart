@@ -1,5 +1,9 @@
 import 'package:hive/hive.dart';
 import 'package:solo_leveling_app/services/ai_image_service.dart';
+import 'package:solo_leveling_app/services/background_image_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 part 'user.g.dart';
 
@@ -96,53 +100,27 @@ class User {
 
   // Get the appropriate character image based on level
   Future<String> getCharacterImagePath() async {
-    try {
-      // Check if user has custom hunter images
-      if (hasCustomHunterImage) {
-        // Determine which image level to use based on current level
-        int imageLevel;
-        if (level >= 25) {
-          imageLevel = 25; // S-Rank (25+)
-        } else if (level >= 20) {
-          imageLevel = 20; // S-Rank (20-24)
-        } else if (level >= 15) {
-          imageLevel = 15; // A-Rank (15-19)
-        } else if (level >= 10) {
-          imageLevel = 10; // B-Rank (10-14)
-        } else if (level >= 5) {
-          imageLevel = 5;  // C-Rank (5-9)
-        } else if (level >= 3) {
-          imageLevel = 3;  // D-Rank (3-4)
-        } else {
-          imageLevel = 1;  // E-Rank (1-2)
-        }
-        
-        // Try to get the custom image for this level
-        final customImagePath = await AIImageService.getUserImagePathForLevel(imageLevel);
-        if (customImagePath != null) {
-          return customImagePath;
-        }
-      }
-      
-      // Fallback to default images if custom image not available
-      if (level >= 25) {
-        return 'assets/images/7.webp'; // Level 25+
-      } else if (level >= 20) {
-        return 'assets/images/6.webp'; // Level 20-24
-      } else if (level >= 15) {
-        return 'assets/images/5.webp'; // Level 15-19
-      } else if (level >= 10) {
-        return 'assets/images/4.webp'; // Level 10-14
-      } else if (level >= 5) {
-        return 'assets/images/2.jpg'; // Using 2.jpg for Level 5-9
-      } else if (level >= 3) {
-        return 'assets/images/2.jpg'; // Level 3-4
-      } else {
-        return 'assets/images/1.webp'; // Level 1-2
-      }
-    } catch (e) {
-      // If any error occurs, return the default image
-      return 'assets/images/1.webp';
+    final directory = await getApplicationDocumentsDirectory();
+    final imagePath = '${directory.path}/user_images/user_level_1.jpg';
+    final file = File(imagePath);
+    
+    if (await file.exists()) {
+      return imagePath;
     }
+    
+    return 'assets/images/character_placeholder.png';
+  }
+
+  Future<String> getCharacterImagePathForLevel(int level) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final imagePath = '${directory.path}/user_images/user_level_$level.jpg';
+    final file = File(imagePath);
+    
+    if (await file.exists()) {
+      return imagePath;
+    }
+    
+    // If the level-specific image doesn't exist, return the default level 1 image
+    return getCharacterImagePath();
   }
 } 

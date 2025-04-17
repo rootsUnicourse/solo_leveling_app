@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'dart:math';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AIImageService {
   // Use the standard predictions endpoint with model version
@@ -19,16 +20,21 @@ class AIImageService {
 
   // Level-specific prompts for Solo Leveling progression
   static const Map<int, String> _levelPrompts = {
-    1: 'A young Korean man in his early 20s, wearing basic hunter gear, E-rank hunter, average build, determined expression, anime style, Solo Leveling art style, dark background, subtle shadow aura',
-    2: 'Same character as level 1 but slightly more confident stance, basic combat gear, subtle shadow particles around hands',
-    3: 'E-rank hunter with improved gear, shadow particles more visible, determined expression, slight muscle definition, Solo Leveling art style',
-    4: 'E-rank hunter with enhanced shadow control, shadow particles forming basic shapes, more confident stance, improved combat gear',
-    5: 'E-rank hunter with visible shadow manipulation, shadows forming basic weapons, stronger presence, improved physique',
-    6: 'D-rank hunter transformation, shadows more defined, forming basic armor pieces, stronger aura, improved combat stance',
-    7: 'D-rank hunter with partial shadow armor, shadows forming weapons and basic armor, more muscular build, confident expression',
-    8: 'D-rank hunter with complete shadow armor set, shadows forming complex shapes, strong presence, battle-ready stance',
-    9: 'C-rank hunter transformation, advanced shadow manipulation, shadows forming complex armor and weapons, powerful aura',
-    10: 'C-rank hunter with mastery over shadows, complete shadow armor set, shadows forming intricate patterns, powerful presence, battle-ready stance'
+    1: 'A young Korean man in his early 20s, wearing basic hunter gear, E-rank hunter, average build, determined expression, anime style, Solo Leveling art style, dark background, subtle shadow aura, similar to Sung Jinwoo\'s initial appearance',
+    2: 'E-rank hunter with basic shadow manipulation, subtle dark energy around hands, wearing reinforced combat gear, determined expression, standing in a combat stance, dark atmosphere, mysterious lighting, similar to early dungeon exploration scenes',
+    3: 'E-rank hunter with visible shadow control, dark energy forming basic shapes, wearing tactical armor, focused expression, ready for battle, dramatic lighting, action pose, reminiscent of early gate raids',
+    4: 'E-rank hunter with enhanced shadow manipulation, shadows forming basic weapons, wearing advanced tactical gear, confident stance, dark energy aura, battle-ready pose, similar to early shadow soldier summoning',
+    5: 'D-rank hunter with partial shadow armor, shadows forming basic armor pieces, wearing reinforced combat gear, strong presence, battle stance, dark energy radiating, similar to the Red Gate arc',
+    6: 'D-rank hunter with complete shadow armor set, shadows forming complex shapes, wearing advanced combat gear, powerful aura, battle-ready stance, dark energy swirling, reminiscent of the Demon Castle arc',
+    7: 'D-rank hunter with mastery over shadows, complete shadow armor set, shadows forming weapons and armor, muscular build, confident expression, dark energy radiating, similar to the Job Change Quest arc',
+    8: 'C-rank hunter with advanced shadow manipulation, shadows forming complex armor and weapons, wearing elite combat gear, powerful presence, battle stance, dark energy aura, reminiscent of the Retesting Rank arc',
+    9: 'B-rank hunter with expert shadow control, shadows forming intricate armor patterns, wearing high-level combat gear, commanding presence, battle-ready stance, dark energy swirling, similar to the Jeju Island arc',
+    10: 'B-rank hunter with near-perfect shadow mastery, shadows forming complex armor and weapons, wearing elite combat gear, powerful aura, battle stance, dark energy radiating, reminiscent of the Tokyo S-Rank Gate arc',
+    11: 'A-rank hunter with supreme shadow control, shadows forming intricate armor and weapons, wearing legendary combat gear, commanding presence, battle-ready stance, dark energy aura, similar to the Monarchs\' War arc',
+    12: 'A-rank hunter with perfect shadow mastery, shadows forming divine armor and weapons, wearing mythical combat gear, godlike presence, battle stance, dark energy swirling, reminiscent of the final battle scenes',
+    13: 'S-rank hunter with ultimate shadow control, shadows forming divine armor and weapons, wearing legendary combat gear, supreme presence, battle-ready stance, dark energy radiating, similar to the Shadow Monarch\'s power',
+    14: 'S-rank hunter with absolute shadow mastery, shadows forming godlike armor and weapons, wearing mythical combat gear, divine presence, battle stance, dark energy aura, reminiscent of the final transformation',
+    15: 'S-rank hunter with complete shadow domination, shadows forming divine armor and weapons, wearing ultimate combat gear, supreme presence, battle-ready stance, dark energy swirling, similar to the ultimate power level'
   };
 
   static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic';
@@ -214,26 +220,25 @@ class AIImageService {
       final response = await http.get(Uri.parse(imageUrl));
       
       if (response.statusCode == 200) {
+        // Get the application documents directory
         final directory = await getApplicationDocumentsDirectory();
         final String folderPath = '${directory.path}/user_images';
         
-        // Create folder if it doesn't exist
+        // Create the user_images folder if it doesn't exist
         final folder = Directory(folderPath);
         if (!await folder.exists()) {
           await folder.create(recursive: true);
         }
         
-        // Save the image with a unique name
+        // Save the image with level in filename
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final String imagePath = '$folderPath/user_level_${level}_${variationTag ?? timestamp}.jpg';
-        final File file = File(imagePath);
+        final filename = 'user_level_$level.jpg';
+        final file = File('$folderPath/$filename');
         await file.writeAsBytes(response.bodyBytes);
-        
-        debugPrint('Image saved: $imagePath');
-        return imagePath;
+        debugPrint('Image saved to: ${file.path}');
+        return file.path;
       } else {
-        debugPrint('Failed to download image: ${response.statusCode}');
-        return null;
+        throw Exception('Failed to download image: ${response.statusCode}');
       }
     } catch (e) {
       debugPrint('Error downloading image: $e');
@@ -362,8 +367,7 @@ class AIImageService {
   }
 
   static Future<String?> _getApiKey() async {
-    // For now, we'll use the environment variable
-    // TODO: Implement a more flexible solution like flutter_dotenv
+    // Get the API key from dart-define
     const apiKey = String.fromEnvironment('REPLICATE_API_KEY');
     if (apiKey.isEmpty) {
       print('Warning: REPLICATE_API_KEY is not set in environment variables');
@@ -380,6 +384,13 @@ class AIImageService {
       "A young male E-rank hunter in basic black tactical gear, standing with arms crossed, looking confident but still inexperienced. Anime style, Solo Leveling inspired, male character, calm expression, starter equipment, confident pose, slight smirk, high angle shot, urban background, street lighting"
     ];
 
+    // Create a directory for profile images if it doesn't exist
+    final directory = await getApplicationDocumentsDirectory();
+    final profileDir = Directory('${directory.path}/profile_images');
+    if (!await profileDir.exists()) {
+      await profileDir.create(recursive: true);
+    }
+
     for (int i = 0; i < variations.length; i++) {
       try {
         final String? imagePath = await generateHunterImage(
@@ -388,7 +399,11 @@ class AIImageService {
           customPrompt: variations[i],
         );
         if (imagePath != null) {
-          imagePaths.add(imagePath);
+          // Copy the generated image to the profile directory with a specific name
+          final profileImagePath = '${profileDir.path}/profile_option_${i + 1}.jpg';
+          await File(imagePath).copy(profileImagePath);
+          imagePaths.add(profileImagePath);
+          debugPrint('Profile image saved: $profileImagePath');
         }
       } catch (e) {
         print('Error generating image variation ${i + 1}: $e');
@@ -396,5 +411,22 @@ class AIImageService {
     }
 
     return imagePaths;
+  }
+
+  // Get the path for a specific profile option
+  static Future<String?> getProfileImagePath(int option) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final profileImagePath = '${directory.path}/profile_images/profile_option_$option.jpg';
+      final file = File(profileImagePath);
+      
+      if (await file.exists()) {
+        return profileImagePath;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting profile image path: $e');
+      return null;
+    }
   }
 } 

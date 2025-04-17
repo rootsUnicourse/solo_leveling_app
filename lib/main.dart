@@ -13,6 +13,8 @@ import 'dart:ui' show PlatformDispatcher;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:workmanager/workmanager.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Keep track of whether we've registered adapters
 bool _adaptersRegistered = false;
@@ -24,10 +26,17 @@ void main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
   // Basic error handling
   FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('Flutter error caught: ${details.exception}');
+    // In release mode, log to console instead of showing error UI
+    if (kReleaseMode) {
+      debugPrint('Flutter error caught: ${details.exception}');
+    } else {
+      FlutterError.presentError(details);
+    }
   };
   
   try {
@@ -53,7 +62,7 @@ void main() async {
     // Initialize the background worker
     await Workmanager().initialize(
       callbackDispatcher,
-      isInDebugMode: true
+      isInDebugMode: !kReleaseMode
     );
     
     // Initialize the background service
@@ -64,8 +73,14 @@ void main() async {
   } catch (e) {
     debugPrint('Error during initialization: $e');
     
-    // Fallback to minimal app
-    runApp(const ErrorApp());
+    // In release mode, try to recover gracefully
+    if (kReleaseMode) {
+      // Try to run with minimal functionality
+      runApp(const MyApp());
+    } else {
+      // In debug mode, show error screen
+      runApp(const ErrorApp());
+    }
   }
 }
 
