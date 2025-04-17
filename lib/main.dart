@@ -92,7 +92,8 @@ void callbackDispatcher() {
     try {
       if (task == BackgroundImageService.uniqueWorkName) {
         // Run the image generation task
-        return await _generateImages();
+        await BackgroundImageService.startBackgroundGeneration();
+        return true;
       }
       return true;
     } catch (e) {
@@ -100,13 +101,6 @@ void callbackDispatcher() {
       return false;
     }
   });
-}
-
-// Re-implement the image generation logic here to avoid dependency issues
-Future<bool> _generateImages() async {
-  // Implementation goes here - simplified version just for registration
-  debugPrint('Image generation task executed');
-  return true;
 }
 
 Future<void> registerAdapters() async {

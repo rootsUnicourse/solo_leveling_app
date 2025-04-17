@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:solo_leveling_app/screens/dashboard_screen.dart';
+import 'package:solo_leveling_app/screens/generated_images_screen.dart';
 import 'dart:io';
 
-class HunterProfileScreen extends StatelessWidget {
+class HunterProfileScreen extends StatefulWidget {
   final String faceImagePath;
   final String hunterImagePath;
 
@@ -13,10 +14,29 @@ class HunterProfileScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _HunterProfileScreenState createState() => _HunterProfileScreenState();
+}
+
+class _HunterProfileScreenState extends State<HunterProfileScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Your Hunter Profile'),
+        title: const Text('Hunter Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GeneratedImagesScreen(),
+                ),
+              );
+            },
+            tooltip: 'View All Generated Images',
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -28,7 +48,7 @@ class HunterProfileScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Image.file(
-              File(hunterImagePath),
+              File(widget.hunterImagePath),
               width: 300,
               height: 300,
               fit: BoxFit.cover,

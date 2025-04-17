@@ -58,5 +58,14 @@
 	<string>This app needs photo library access to create your hunter profile</string>
 	<key>AppGroupID</key>
 	<string>group.com.danel.solo-leveling</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.danel.solo-leveling.background-image-generation</string>
+	</array>
 </dict>
 </plist>

@@ -68,6 +68,9 @@ dependencies:
   # google_mlkit_image_labeling: ^0.8.0
   # tflite_flutter: ^0.10.1
 
+  # For background service
+  flutter_background_service: ^5.0.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -98,6 +101,7 @@ flutter:
     - assets/images/1.webp
     - assets/images/2.jpg
     - assets/images/4.webp
+    - assets/images/character_placeholder.png
     - assets/images/5.webp
     - assets/images/6.webp
     - assets/images/7.webp

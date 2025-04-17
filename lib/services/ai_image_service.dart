@@ -11,7 +11,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class AIImageService {
   // Use the standard predictions endpoint with model version
   static const String _apiUrl = 'https://api.replicate.com/v1/predictions';
-  static const String _modelVersion = 'zsxkib/instant-id:c98b2e7a196828d00955767813b81fc05c5c9b294c670c6d147d545fed4ceecf';
+  
+  // Model version IDs
+  static const String _modelVersionAnimagine = '7af46ee494f1cf196d49a8592737f4eb789e34a5a995751b23a869d19f5dc2ba';
+  static const String _modelVersionInstantID = '11219f80ba03ca1ce78194191ffa4fc74f7c1afeef50df95f477aa66f2f65bc5';
+  
+  // Runtime model selection
+  static const bool kUseInstantID = false; // Set to true if you need face upload
+  static const String _modelVersion = kUseInstantID ? _modelVersionInstantID : _modelVersionAnimagine;
   
   // Helper function to remove null values from map
   static Map<String, dynamic> _cleanInput(Map<String, dynamic> raw) {
@@ -34,38 +41,54 @@ class AIImageService {
     12: 'A-rank hunter with perfect shadow mastery, shadows forming divine armor and weapons, wearing mythical combat gear, godlike presence, battle stance, dark energy swirling, reminiscent of the final battle scenes',
     13: 'S-rank hunter with ultimate shadow control, shadows forming divine armor and weapons, wearing legendary combat gear, supreme presence, battle-ready stance, dark energy radiating, similar to the Shadow Monarch\'s power',
     14: 'S-rank hunter with absolute shadow mastery, shadows forming godlike armor and weapons, wearing mythical combat gear, divine presence, battle stance, dark energy aura, reminiscent of the final transformation',
-    15: 'S-rank hunter with complete shadow domination, shadows forming divine armor and weapons, wearing ultimate combat gear, supreme presence, battle-ready stance, dark energy swirling, similar to the ultimate power level'
+    15: 'S-rank hunter with complete shadow domination, shadows forming divine armor and weapons, wearing ultimate combat gear, supreme presence, battle-ready stance, dark energy swirling, similar to the ultimate power level',
+    // Extended prompts for higher levels
+    20: 'S-rank hunter with evolved shadow powers, wearing advanced mythical armor, surrounded by swirling dark energy, commanding presence, battle stance, divine aura, similar to the Monarchs\' War arc',
+    25: 'S-rank hunter with enhanced shadow abilities, wearing legendary armor, powerful presence, dark energy radiating, battle-ready pose, similar to the Shadow Monarch\'s power',
+    30: 'S-rank hunter with supreme shadow control, wearing divine armor, godlike presence, dark energy swirling, battle stance, similar to the final battle scenes',
+    35: 'S-rank hunter with ultimate shadow mastery, wearing mythical armor, supreme presence, dark energy aura, battle-ready stance, similar to the ultimate power level',
+    40: 'S-rank hunter with perfected shadow abilities, wearing ultimate armor, divine presence, dark energy radiating, battle stance, similar to the Monarchs\' War arc',
+    45: 'S-rank hunter with absolute shadow control, wearing legendary armor, godlike presence, dark energy swirling, battle-ready pose, similar to the Shadow Monarch\'s power',
+    50: 'S-rank hunter with complete shadow mastery, wearing divine armor, supreme presence, dark energy aura, battle stance, similar to the final battle scenes',
+    55: 'S-rank hunter with evolved shadow powers, wearing mythical armor, divine presence, dark energy radiating, battle-ready stance, similar to the ultimate power level',
+    60: 'S-rank hunter with enhanced shadow abilities, wearing ultimate armor, godlike presence, dark energy swirling, battle stance, similar to the Monarchs\' War arc',
+    65: 'S-rank hunter with supreme shadow control, wearing legendary armor, supreme presence, dark energy aura, battle-ready pose, similar to the Shadow Monarch\'s power',
+    70: 'S-rank hunter with ultimate shadow mastery, wearing divine armor, godlike presence, dark energy radiating, battle stance, similar to the final battle scenes'
   };
 
   static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic';
 
   // Generate a hunter image for the specified level
   static Future<String?> generateHunterImage(
-    String faceImagePath, 
+    String? faceImagePath, 
     int level, {
     String? customPrompt,
     String? poseImagePath,
   }) async {
     try {
-      final apiKey = await _getApiKey();
+      final apiKey = dotenv.env['REPLICATE_API_TOKEN'];
       if (apiKey == null) {
-        throw Exception('API key not found');
+        debugPrint('Warning: REPLICATE_API_TOKEN is not set in environment variables');
+        return null;
       }
 
-      // Read and preprocess the face image
-      final faceImageFile = File(faceImagePath);
-      final faceImageBytes = await faceImageFile.readAsBytes();
-      final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
-      
-      final faceImageBase64 = base64Encode(processedFaceBytes);
-      final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
-          ? 'image/jpeg' 
-          : 'image/png';
-      final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
+      // Only preprocess when you really need it
+      String? faceImageDataUrl;
+      if (faceImagePath != null && kUseInstantID) {
+        final faceImageFile = File(faceImagePath);
+        final faceImageBytes = await faceImageFile.readAsBytes();
+        final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
+        
+        final faceImageBase64 = base64Encode(processedFaceBytes);
+        final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
+            ? 'image/jpeg' 
+            : 'image/png';
+        faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
+      }
 
-      // Add pose image if provided
+      // Add pose image if provided and using Instant-ID
       String? poseImageDataUrl;
-      if (poseImagePath != null) {
+      if (poseImagePath != null && kUseInstantID) {
         final poseImageFile = File(poseImagePath);
         final poseImageBytes = await poseImageFile.readAsBytes();
         final processedPoseBytes = await _preprocessImage(Uint8List.fromList(poseImageBytes));
@@ -82,20 +105,25 @@ class AIImageService {
 
       // Create the input for the API with adjusted parameters
       final input = _cleanInput({
-        'image': faceImageDataUrl,
         'prompt': prompt,
         'negative_prompt': _negativePrompt,
-        'width': 640,
-        'height': 640,
-        'guidance_scale': 5,
-        'num_inference_steps': 40,
-        'ip_adapter_scale': 0.65,
-        'pose_image_path': poseImageDataUrl,
-        'seed': Random().nextInt(2147483647),
+        'width': 1024,
+        'height': 1024,
+        'num_inference_steps': 25,
+        'guidance_scale': 6,
+        'seed': Random().nextInt(1 << 31),
+
+        // Add these only when Instant-ID is active
+        if (kUseInstantID) ...{
+          'image': faceImageDataUrl,
+          'ip_adapter_scale': 0.65,
+          'sdxl_weights': 'rocketdigitalai/animagine-xl-4.0',
+          if (poseImageDataUrl != null) 'pose_image': poseImageDataUrl,
+        },
       });
 
       print('Starting image generation with prompt: $prompt');
-      print('Using 640x640 resolution for faster processing');
+      print('Using 1024x1024 resolution for faster processing');
       
       // Make the API call to Replicate
       final response = await http.post(
@@ -106,7 +134,7 @@ class AIImageService {
           'Prefer': 'wait=60',
         },
         body: jsonEncode({
-          'version': _modelVersion.split(':').last,
+          'version': _modelVersion,
           'input': input
         }),
       );
@@ -177,11 +205,20 @@ class AIImageService {
             completed = true;
             final output = data['output'];
             
+            // Handle both array and string output formats
+            String? imageUrl;
             if (output is List && output.isNotEmpty) {
+              imageUrl = output[0];
+            } else if (output is String) {
+              imageUrl = output;
+            }
+            
+            if (imageUrl != null) {
               print('Image generation completed successfully!');
-              return await _downloadAndSaveImage(output[0], level);
+              return await _downloadAndSaveImage(imageUrl, level);
             } else {
               print('No output URL found in successful response');
+              print('Full response: $data');
               throw Exception('No output URL found in successful response');
             }
           } else if (status == 'failed') {
@@ -231,7 +268,6 @@ class AIImageService {
         }
         
         // Save the image with level in filename
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
         final filename = 'user_level_$level.jpg';
         final file = File('$folderPath/$filename');
         await file.writeAsBytes(response.bodyBytes);
@@ -428,5 +464,18 @@ class AIImageService {
       debugPrint('Error getting profile image path: $e');
       return null;
     }
+  }
+
+  // Get the appropriate character image based on level
+  static Future<String> getCharacterImagePath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    final imagePath = '${directory.path}/user_images/user_level_1.jpg';
+    final file = File(imagePath);
+    
+    if (await file.exists()) {
+      return imagePath;
+    }
+    
+    return 'assets/images/1.webp'; // Using an existing image as placeholder
   }
 } 
