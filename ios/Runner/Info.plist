@@ -52,8 +52,10 @@
 	</dict>
 	<key>NSDocumentsFolderUsageDescription</key>
 	<string>Access to the documents folder is required to store your missions and progress data.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to create your hunter profile</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Access to the photo library may be needed for storing character images.</string>
+	<string>This app needs photo library access to create your hunter profile</string>
 	<key>AppGroupID</key>
 	<string>group.com.danel.solo-leveling</string>
 </dict>

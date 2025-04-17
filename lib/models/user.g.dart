@@ -23,13 +23,14 @@ class UserAdapter extends TypeAdapter<User> {
       nextLevelXp: fields[3] as int,
       stats: (fields[4] as Map).cast<String, int>(),
       rank: fields[5] as String,
+      hasCustomHunterImage: fields.containsKey(6) ? fields[6] as bool : false,
     );
   }
 
   @override
   void write(BinaryWriter writer, User obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class UserAdapter extends TypeAdapter<User> {
       ..writeByte(4)
       ..write(obj.stats)
       ..writeByte(5)
-      ..write(obj.rank);
+      ..write(obj.rank)
+      ..writeByte(6)
+      ..write(obj.hasCustomHunterImage);
   }
 
   @override

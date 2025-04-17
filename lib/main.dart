@@ -8,9 +8,11 @@ import 'package:solo_leveling_app/models/user.dart';
 import 'package:solo_leveling_app/providers/app_provider.dart';
 import 'package:solo_leveling_app/screens/dashboard_screen.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
+import 'package:solo_leveling_app/services/background_image_service.dart';
 import 'dart:ui' show PlatformDispatcher;
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:workmanager/workmanager.dart';
 
 // Keep track of whether we've registered adapters
 bool _adaptersRegistered = false;
@@ -48,6 +50,15 @@ void main() async {
       await userBox.put('currentUser', User.initial());
     }
     
+    // Initialize the background worker
+    await Workmanager().initialize(
+      callbackDispatcher,
+      isInDebugMode: true
+    );
+    
+    // Initialize the background service
+    await BackgroundImageService.initialize();
+    
     // Run app
     runApp(const MyApp());
   } catch (e) {
@@ -56,6 +67,31 @@ void main() async {
     // Fallback to minimal app
     runApp(const ErrorApp());
   }
+}
+
+// The callback dispatcher for WorkManager
+@pragma('vm:entry-point')
+void callbackDispatcher() {
+  Workmanager().executeTask((task, inputData) async {
+    debugPrint('Background task started: $task');
+    try {
+      if (task == BackgroundImageService.uniqueWorkName) {
+        // Run the image generation task
+        return await _generateImages();
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error in background task: $e');
+      return false;
+    }
+  });
+}
+
+// Re-implement the image generation logic here to avoid dependency issues
+Future<bool> _generateImages() async {
+  // Implementation goes here - simplified version just for registration
+  debugPrint('Image generation task executed');
+  return true;
 }
 
 Future<void> registerAdapters() async {

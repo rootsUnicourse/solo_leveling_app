@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:solo_leveling_app/services/ai_image_service.dart';
 
 part 'user.g.dart';
 
@@ -21,6 +22,9 @@ class User {
 
   @HiveField(5)
   String rank;
+  
+  @HiveField(6)
+  bool hasCustomHunterImage;
 
   User({
     required this.id,
@@ -29,6 +33,7 @@ class User {
     this.nextLevelXp = 1000,
     required this.stats,
     this.rank = 'E-Rank Hunter',
+    this.hasCustomHunterImage = false,
   });
 
   factory User.initial() {
@@ -90,9 +95,36 @@ class User {
   }
 
   // Get the appropriate character image based on level
-  String getCharacterImagePath() {
+  Future<String> getCharacterImagePath() async {
     try {
-      // Use only webp and jpg formats that are known to work well on both platforms
+      // Check if user has custom hunter images
+      if (hasCustomHunterImage) {
+        // Determine which image level to use based on current level
+        int imageLevel;
+        if (level >= 25) {
+          imageLevel = 25; // S-Rank (25+)
+        } else if (level >= 20) {
+          imageLevel = 20; // S-Rank (20-24)
+        } else if (level >= 15) {
+          imageLevel = 15; // A-Rank (15-19)
+        } else if (level >= 10) {
+          imageLevel = 10; // B-Rank (10-14)
+        } else if (level >= 5) {
+          imageLevel = 5;  // C-Rank (5-9)
+        } else if (level >= 3) {
+          imageLevel = 3;  // D-Rank (3-4)
+        } else {
+          imageLevel = 1;  // E-Rank (1-2)
+        }
+        
+        // Try to get the custom image for this level
+        final customImagePath = await AIImageService.getUserImagePathForLevel(imageLevel);
+        if (customImagePath != null) {
+          return customImagePath;
+        }
+      }
+      
+      // Fallback to default images if custom image not available
       if (level >= 25) {
         return 'assets/images/7.webp'; // Level 25+
       } else if (level >= 20) {

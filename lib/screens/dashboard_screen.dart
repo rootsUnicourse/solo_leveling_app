@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
 import 'package:solo_leveling_app/widgets/quick_mission_popup.dart';
 import 'package:solo_leveling_app/widgets/welcome_dialog.dart';
+import 'dart:io';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -180,26 +181,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 aspectRatio: 1,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
-                  child: Builder(
-                    builder: (context) {
-                      try {
-                        return Image.asset(
-                          user.getCharacterImagePath(),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            debugPrint('Error loading image: $error');
-                            return Container(
-                              color: Colors.grey.withOpacity(0.3),
-                              child: Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                            );
-                          },
+                  child: FutureBuilder<String>(
+                    future: user.getCharacterImagePath(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Container(
+                          color: Colors.grey.withOpacity(0.3),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         );
-                      } catch (e) {
-                        debugPrint('Exception when loading image: $e');
+                      } else if (snapshot.hasError || !snapshot.hasData) {
+                        debugPrint('Error loading image: ${snapshot.error}');
                         return Container(
                           color: Colors.grey.withOpacity(0.3),
                           child: Icon(
@@ -208,6 +201,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: Colors.white.withOpacity(0.8),
                           ),
                         );
+                      } else {
+                        final imagePath = snapshot.data!;
+                        
+                        if (imagePath.startsWith('assets/')) {
+                          // Asset image
+                          return Image.asset(
+                            imagePath,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint('Error loading asset image: $error');
+                              return Container(
+                                color: Colors.grey.withOpacity(0.3),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              );
+                            },
+                          );
+                        } else {
+                          // File image
+                          return Image.file(
+                            File(imagePath),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              debugPrint('Error loading file image: $error');
+                              return Container(
+                                color: Colors.grey.withOpacity(0.3),
+                                child: Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.white.withOpacity(0.8),
+                                ),
+                              );
+                            },
+                          );
+                        }
                       }
                     },
                   ),

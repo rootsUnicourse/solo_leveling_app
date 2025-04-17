@@ -500,4 +500,49 @@ class StorageService {
       return [];
     }
   }
+
+  // Update user's custom hunter image status
+  static Future<void> updateUserCustomImageStatus(bool hasCustomImage) async {
+    try {
+      await init(); // Make sure storage is initialized
+      
+      final box = Hive.box<User>(userBoxName);
+      final User user = box.get(currentUserKey) as User;
+      
+      // Update the flag
+      user.hasCustomHunterImage = hasCustomImage;
+      
+      // Save back to storage
+      await box.put(currentUserKey, user);
+      
+      debugPrint('Updated user custom image status to: $hasCustomImage');
+    } catch (e) {
+      debugPrint('Error updating user custom image status: $e');
+    }
+  }
+  
+  // Check if any custom hunter images exist for the user
+  static Future<bool> userHasAnyCustomImages() async {
+    try {
+      // Get the application documents directory
+      final appDir = await getApplicationDocumentsDirectory();
+      final String userImagesPath = '${appDir.path}/user_images';
+      
+      // Check if the directory exists
+      final dir = Directory(userImagesPath);
+      if (!await dir.exists()) {
+        return false;
+      }
+      
+      // Check if any files exist in the directory
+      final List<FileSystemEntity> files = await dir.list().toList();
+      final hasImages = files.isNotEmpty;
+      
+      debugPrint('User has custom images: $hasImages');
+      return hasImages;
+    } catch (e) {
+      debugPrint('Error checking for custom images: $e');
+      return false;
+    }
+  }
 } 
