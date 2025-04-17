@@ -34,15 +34,17 @@ class AIImageService {
   static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic';
 
   // Generate a hunter image for the specified level
-  static Future<String?> generateHunterImage(String faceImagePath, int level, {String? poseImagePath}) async {
+  static Future<String?> generateHunterImage(
+    String faceImagePath, 
+    int level, {
+    String? customPrompt,
+    String? poseImagePath,
+  }) async {
     try {
       final apiKey = await _getApiKey();
       if (apiKey == null) {
         throw Exception('API key not found');
       }
-
-      // Get the appropriate prompt for the level
-      final prompt = _levelPrompts[level] ?? _levelPrompts[1]!;
 
       // Read and preprocess the face image
       final faceImageFile = File(faceImagePath);
@@ -69,7 +71,10 @@ class AIImageService {
         poseImageDataUrl = 'data:$poseMime;base64,$poseImageBase64';
       }
 
-      // Create the input for the API with all possible fields
+      // Use custom prompt if provided, otherwise use the level-specific prompt
+      final prompt = customPrompt ?? _levelPrompts[level] ?? _levelPrompts[1]!;
+
+      // Create the input for the API with adjusted parameters
       final input = _cleanInput({
         'image': faceImageDataUrl,
         'prompt': prompt,
@@ -77,8 +82,8 @@ class AIImageService {
         'width': 640,
         'height': 640,
         'guidance_scale': 5,
-        'num_inference_steps': 30,
-        'ip_adapter_scale': 0.8,
+        'num_inference_steps': 40,
+        'ip_adapter_scale': 0.65,
         'pose_image_path': poseImageDataUrl,
         'seed': Random().nextInt(2147483647),
       });
@@ -119,14 +124,14 @@ class AIImageService {
       if (prediction['status'] == 'succeeded' && prediction['output'] != null) {
         final resultUrl = prediction['output'][0];
         print('Image generation completed immediately. Output URL: $resultUrl');
-        return await _downloadAndSaveImage(resultUrl, level);
+        return await _downloadAndSaveImage(resultUrl, level, variationTag: 'immediate');
       }
 
       // If not complete, poll for the result
       return await _pollForResult(prediction['id'], apiKey, level);
     } catch (e) {
       print('Error generating hunter image: $e');
-      rethrow;
+      return null;
     }
   }
   
@@ -204,7 +209,7 @@ class AIImageService {
   }
   
   // Download and save the generated image
-  static Future<String?> _downloadAndSaveImage(String imageUrl, int level) async {
+  static Future<String?> _downloadAndSaveImage(String imageUrl, int level, {String? variationTag}) async {
     try {
       final response = await http.get(Uri.parse(imageUrl));
       
@@ -218,8 +223,9 @@ class AIImageService {
           await folder.create(recursive: true);
         }
         
-        // Save the image
-        final String imagePath = '$folderPath/user_level_$level.jpg';
+        // Save the image with a unique name
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final String imagePath = '$folderPath/user_level_${level}_${variationTag ?? timestamp}.jpg';
         final File file = File(imagePath);
         await file.writeAsBytes(response.bodyBytes);
         
@@ -364,5 +370,31 @@ class AIImageService {
       return null;
     }
     return apiKey;
+  }
+
+  static Future<List<String>> generateMultipleErankImages(String faceImagePath) async {
+    final List<String> imagePaths = [];
+    final List<String> variations = [
+      "A young male E-rank hunter in basic black combat gear, standing in a defensive stance with fists raised, looking determined but inexperienced. Anime style, Solo Leveling inspired, male character, serious expression, basic equipment, combat pose, ready to fight, dynamic pose, action shot, dramatic lighting",
+      "A young male E-rank hunter in a simple black jacket and pants, crouching in a stealth position, looking focused and alert. Anime style, Solo Leveling inspired, male character, determined expression, minimal gear, stealth pose, hand on weapon, low angle shot, dark atmosphere, mysterious lighting",
+      "A young male E-rank hunter in basic black tactical gear, standing with arms crossed, looking confident but still inexperienced. Anime style, Solo Leveling inspired, male character, calm expression, starter equipment, confident pose, slight smirk, high angle shot, urban background, street lighting"
+    ];
+
+    for (int i = 0; i < variations.length; i++) {
+      try {
+        final String? imagePath = await generateHunterImage(
+          faceImagePath,
+          1,
+          customPrompt: variations[i],
+        );
+        if (imagePath != null) {
+          imagePaths.add(imagePath);
+        }
+      } catch (e) {
+        print('Error generating image variation ${i + 1}: $e');
+      }
+    }
+
+    return imagePaths;
   }
 } 
