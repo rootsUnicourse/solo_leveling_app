@@ -17,7 +17,7 @@ class AIImageService {
   static const String _modelVersionInstantID = '11219f80ba03ca1ce78194191ffa4fc74f7c1afeef50df95f477aa66f2f65bc5';
   
   // Runtime model selection
-  static const bool kUseInstantID = false; // Set to true if you need face upload
+  static const bool kUseInstantID = true; // Enable InstantID to use face images
   static const String _modelVersion = kUseInstantID ? _modelVersionInstantID : _modelVersionAnimagine;
   
   // Helper function to remove null values from map
@@ -27,33 +27,32 @@ class AIImageService {
 
   // Level-specific prompts for Solo Leveling progression
   static const Map<int, String> _levelPrompts = {
-    1: 'A young Korean man in his early 20s, wearing basic hunter gear, E-rank hunter, average build, determined expression, anime style, Solo Leveling art style, dark background, subtle shadow aura, similar to Sung Jinwoo\'s initial appearance',
+    1: 'A young Korean man in his early 20s, wearing torn basic hunter gear, standing at the mouth of a dimly lit dungeon tunnel. His stance is tense and defensive, knees slightly bent and shoulders trembling from exhaustion. Dirt and blood smear his face, and his wide eyes reflect fear and desperation—yet a spark of determination burns within them. The flickering torchlight casts long shadows behind him, hinting at the darkness and danger surrounding the weakest E-rank hunter at the start of his journey.',
     2: 'E-rank hunter with basic shadow manipulation, subtle dark energy around hands, wearing reinforced combat gear, determined expression, standing in a combat stance, dark atmosphere, mysterious lighting, similar to early dungeon exploration scenes',
     3: 'E-rank hunter with visible shadow control, dark energy forming basic shapes, wearing tactical armor, focused expression, ready for battle, dramatic lighting, action pose, reminiscent of early gate raids',
     4: 'E-rank hunter with enhanced shadow manipulation, shadows forming basic weapons, wearing advanced tactical gear, confident stance, dark energy aura, battle-ready pose, similar to early shadow soldier summoning',
-    5: 'D-rank hunter with partial shadow armor, shadows forming basic armor pieces, wearing reinforced combat gear, strong presence, battle stance, dark energy radiating, similar to the Red Gate arc',
+    5: 'A young Korean man in his early 20s, appearing sturdier and more confident in a shallow dungeon chamber littered with the remains of low-level monsters. His cheap armor is still modest, but his grip on a gleaming dagger is steady and sure. He stands catching his breath over a fallen beast, chest heaving from exertion, and a hint of a satisfied smile tugs at his lips. Soft blue light from a magical lantern dances across his face, revealing newfound resolve in his eyes as the once-weak hunter begins tapping into his awakened potential.',
     6: 'D-rank hunter with complete shadow armor set, shadows forming complex shapes, wearing advanced combat gear, powerful aura, battle-ready stance, dark energy swirling, reminiscent of the Demon Castle arc',
     7: 'D-rank hunter with mastery over shadows, complete shadow armor set, shadows forming weapons and armor, muscular build, confident expression, dark energy radiating, similar to the Job Change Quest arc',
     8: 'C-rank hunter with advanced shadow manipulation, shadows forming complex armor and weapons, wearing elite combat gear, powerful presence, battle stance, dark energy aura, reminiscent of the Retesting Rank arc',
     9: 'B-rank hunter with expert shadow control, shadows forming intricate armor patterns, wearing high-level combat gear, commanding presence, battle-ready stance, dark energy swirling, similar to the Jeju Island arc',
-    10: 'B-rank hunter with near-perfect shadow mastery, shadows forming complex armor and weapons, wearing elite combat gear, powerful aura, battle stance, dark energy radiating, reminiscent of the Tokyo S-Rank Gate arc',
+    10: 'A young Korean man in his early 20s, his frail physique transformed noticeably—lean muscle now tones his frame under a fitted black combat jacket as he strides through a dungeon corridor. He wields dual daggers, their blades glinting in the eerie green glow of subterranean moss. His once fearful expression has hardened into a look of fierce determination, eyes locked forward as a hulking beast looms ahead. The air around him crackles with anticipation; motes of dust swirl at his boots, and even the shadows seem to bend away from the rising D-rank hunter who refuses to back down.',
     11: 'A-rank hunter with supreme shadow control, shadows forming intricate armor and weapons, wearing legendary combat gear, commanding presence, battle-ready stance, dark energy aura, similar to the Monarchs\' War arc',
     12: 'A-rank hunter with perfect shadow mastery, shadows forming divine armor and weapons, wearing mythical combat gear, godlike presence, battle stance, dark energy swirling, reminiscent of the final battle scenes',
     13: 'S-rank hunter with ultimate shadow control, shadows forming divine armor and weapons, wearing legendary combat gear, supreme presence, battle-ready stance, dark energy radiating, similar to the Shadow Monarch\'s power',
     14: 'S-rank hunter with absolute shadow mastery, shadows forming godlike armor and weapons, wearing mythical combat gear, divine presence, battle stance, dark energy aura, reminiscent of the final transformation',
-    15: 'S-rank hunter with complete shadow domination, shadows forming divine armor and weapons, wearing ultimate combat gear, supreme presence, battle-ready stance, dark energy swirling, similar to the ultimate power level',
-    // Extended prompts for higher levels
-    20: 'S-rank hunter with evolved shadow powers, wearing advanced mythical armor, surrounded by swirling dark energy, commanding presence, battle stance, divine aura, similar to the Monarchs\' War arc',
-    25: 'S-rank hunter with enhanced shadow abilities, wearing legendary armor, powerful presence, dark energy radiating, battle-ready pose, similar to the Shadow Monarch\'s power',
-    30: 'S-rank hunter with supreme shadow control, wearing divine armor, godlike presence, dark energy swirling, battle stance, similar to the final battle scenes',
-    35: 'S-rank hunter with ultimate shadow mastery, wearing mythical armor, supreme presence, dark energy aura, battle-ready stance, similar to the ultimate power level',
-    40: 'S-rank hunter with perfected shadow abilities, wearing ultimate armor, divine presence, dark energy radiating, battle stance, similar to the Monarchs\' War arc',
-    45: 'S-rank hunter with absolute shadow control, wearing legendary armor, godlike presence, dark energy swirling, battle-ready pose, similar to the Shadow Monarch\'s power',
-    50: 'S-rank hunter with complete shadow mastery, wearing divine armor, supreme presence, dark energy aura, battle stance, similar to the final battle scenes',
-    55: 'S-rank hunter with evolved shadow powers, wearing mythical armor, divine presence, dark energy radiating, battle-ready stance, similar to the ultimate power level',
-    60: 'S-rank hunter with enhanced shadow abilities, wearing ultimate armor, godlike presence, dark energy swirling, battle stance, similar to the Monarchs\' War arc',
-    65: 'S-rank hunter with supreme shadow control, wearing legendary armor, supreme presence, dark energy aura, battle-ready pose, similar to the Shadow Monarch\'s power',
-    70: 'S-rank hunter with ultimate shadow mastery, wearing divine armor, godlike presence, dark energy radiating, battle stance, similar to the final battle scenes'
+    15: 'A young Korean man in his early 20s, exuding the poise of a seasoned fighter. He stands amid the aftermath of a fierce battle in a cavernous dungeon hall, the hulking corpse of an orc chieftain collapsed at his feet. His dark combat attire is splattered with monster blood, and he casually twirls a blood-stained dagger in one hand after dispatching his enemy with lethal precision. His stance is relaxed yet ready—a confident smirk on his lips and not a trace of the old fear in his eyes—as embers from fallen torches cast dancing light on the C-rank hunter\'s formidable figure.',
+    20: 'A young Korean man in his early 20s, charging head-on toward a towering troll deep within a dungeon\'s core. His twin daggers gleam with faint magical light as he lunges, effortlessly evading a massive stone club that crashes into the ground where he stood mere moments before. Muscles coiled and eyes sharp with focus, he retaliates with blinding speed—a flurry of slashes carving into the beast and sending it reeling. The once-timid young man now radiates unshakable confidence; a subtle aura of dark energy begins to pulse around him, whipping at the edges of his black coat and making the very shadows tremble with his burgeoning B-rank power.',
+    25: 'A young Korean man in his early 20s, his prowess grown so much that even seasoned hunters look to him for protection. In a high-level dungeon\'s boss chamber, he plants himself between a wounded ally sprawled on the ground and a towering, snarling stone golem about to strike. His black battle outfit is now reinforced with pieces of magical armor; though scratched and dusty from the fight, he stands unyielding, twin daggers crossed defiantly to block the monster\'s massive blow. His expression remains calm and resolute, eyes burning with a quiet fury as a dark haze gathers around his feet—shadowy tendrils coiling outward as if responding to the near A-rank warrior\'s indomitable will.',
+    30: 'A young Korean man in his early 20s, having ascended to the threshold of S-rank strength, capable of feats that astonish veteran hunters. In a blur of motion, he single-handedly cuts through a pack of elite dungeon beasts that would have overwhelmed entire teams before. For the final blow, he springs high into the air above a colossal ogre king, crossing his twin daggers as they crackle with dark energy and executing an X-shaped slash that cleaves the monster in two and splits the stone floor beneath it. He lands lightly amid settling dust and the dissolving ash of defeated foes, silhouetted against the dungeon\'s eerie crystal light as he stands radiating quiet menace. His expression is cold and focused—barely a hint of exertion on his face—while an inky black aura now visibly pulses from his body, foreshadowing the great power he is destined to wield.',
+    35: 'A young Korean man in his early 20s, carrying himself with quiet, unshakable confidence as he senses an ominous new challenge on the horizon. He strides into the pitch-black entrance of a hidden dungeon—a special quest only he can perceive—without hesitation. Colossal stone statues stand guard in the cavernous temple hall that unfolds before him, their carved eyes seeming to watch the lone hunter in eerie silence. He pauses at the center of the hall with daggers drawn, his face calm and determined, as a faint violet glow from unseen runes casts an otherworldly light on his features. The air is heavy with anticipation and his very shadow pools darker and larger beneath him, as if sensing that the final barrier to his true power is about to be shattered.',
+    40: 'A young Korean man in his early 20s, reborn as something beyond human. In the aftermath of his brutal Job Change Quest, he kneels in the center of a ruined stone temple, surrounded by the shattered remnants of the giant statues he somehow overcame. Blood trickles from cuts on his arms and his chest heaves, but a fierce, triumphant light burns in his eyes as he slowly pushes himself to his feet. An oppressive black aura now rolls off him like living smoke, tinged with flickers of violet—the very shadows in the hall writhe and seem to bow toward their new master. His dagger crackles with dark energy in his grip, and the once-silent chamber trembles as he ascends, heralding the rise of the Shadow Monarch within what was once the weakest of hunters.',
+    45: 'A young Korean man in his early 20s, fully embracing his new identity as the commander of shadows. He now dons a sleek black coat that flutters dramatically behind him as he stands in a dungeon antechamber, flanked by two of his summoned dark knights. One is a lithe, red-plumed swordsman in jagged ebon armor, and the other a towering, horn-helmeted giant of a knight—both radiating an eerie blue glow from within their visors as they await their liege\'s command. He holds one hand aloft mid-summon, tendrils of darkness curling around his arm, while his other hand casually twirls a dagger at his side. His expression is calm and authoritative, almost regal, as cold light from the portal reflects off his eyes. Every shifting shadow at his feet moves in accordance with his will, affirming the rise of an S-rank hunter who commands an army of darkness.',
+    50: 'A young Korean man in his early 20s, braving the infamous Red Gate—a lethal dungeon that has stranded him in an icy, otherworldly forest under a blood-red sky. In this frozen realm, snow blankets the ground and each breath escapes his lips as a puff of white mist. He wears a heavy white fur cloak over his black armor, taken from a slain beast, and stands protectively close to a trembling survivor he\'s sworn to shield from the elements. His eyes burn with fierce resolve even as frost gathers in his dark hair; around him, shadowy beasts prowl at the edge of the tree line—a colossal shadow bear and wolf-like wraiths ready to strike at his command. Despite the numbing cold, an aura of dark power pulses off him like a black flame, defying the freezing air and casting an eerie warmth across the snow as the Shadow Monarch\'s power asserts itself in this frozen hell.',
+    55: 'A young Korean man in his early 20s, having stormed the gates of the Demon Castle, pushing his powers to new heights in that hellish domain. He strides through the Demon King\'s grand throne hall, a vast chamber wreathed in roaring flames and flickering shadows. The charred remains of vanquished demons lie scattered across obsidian tiles, and the colossal, horned Demon King himself lies fallen behind him, his massive form disintegrating into glowing embers. He stands tall and unbowed amid the chaos, clad in battle-scorched black armor etched with faintly glowing crimson runes and gripping a jagged obsidian blade crackling with residual demonic power—a trophy torn from his defeated foe. Bathed in the orange glow of hellfire, his eyes burn with cold fury and triumph as ash swirls in the heat-distorted air. He exudes an aura of absolute dominance, the undisputed master of this infernal domain and every shadow within it.',
+    60: 'A young Korean man in his early 20s, emerging triumphant on the blood-soaked shores of Jeju Island after the epic battle against the monstrous ant colony. Around him on the beach lie the colossal carcasses of ant beasts—their black exoskeletons cracked and smoldering, half-buried in sand and surf under a stormy sky. He stands at the center of the carnage with his ebony coat tattered and drenched in monster blood, his chest rising and falling with steady breaths as the adrenaline of battle fades. Before him kneels a towering humanoid ant with a crown-like carapace—the shadow of the defeated Ant King, reborn as his loyal servant. Its insectoid eyes glow an ethereal blue as it bows its head deeply. A shaft of sunlight breaks through the smoky clouds to illuminate his hardened yet relieved expression as he gently extends a hand to acknowledge his new shadow general. With waves crashing behind him and surviving shadow soldiers gathering around, the savior of Jeju Island stands victorious, fully stepping into his role as a legendary Shadow Monarch.',
+    65: 'A young Korean man in his early 20s, standing at the epicenter of the ultimate war between the superpowered Monarchs as humanity\'s last hope. On the ruined streets of a city besieged by otherworldly forces, he faces off against two enemy Monarchs amid toppled skyscrapers and raging fires. Colossal shadow creatures from his army clash with the invaders: a resurrected giant swings a wrecking-ball fist into a scaly behemoth, and above them a dark wyvern-like dragon shadow duels in midair with a frost-winged monstrosity summoned by the enemy. At the center of the battlefield, he charges forward, wielding a massive black blade formed from pure shadow, aiming directly for the snarling Beast Monarch that towers in his path. His eyes blaze with furious resolve as a storm of black aura spirals around him, shattering windows and tossing debris with its force. Orchestrating his legion with imperious gestures, he fights like a true Shadow Monarch, turning the tide of this climactic Monarch War through sheer will and unrivaled power.',
+    70: 'A young Korean man in his early 20s, having ascended to the very pinnacle of his might, fully manifesting as a godlike Shadow Monarch. Under a storm-black sky torn open by dimensional rifts, he stands unflinchingly against the Dragon Monarch Antares on a battlefield of utter ruin—a colossal crimson dragon rearing up before him and bathing the shattered city in hellish flames. His appearance is truly otherworldly: he is clad in ornate obsidian armor wreathed in swirling shadows, with great black wings unfurled behind him and a crown of crackling dark energy hovering above his head. His eyes glow with a fierce golden light, and waves of dark aura radiate from him, cracking the very earth beneath his feet. An endless legion of shadow soldiers stretches behind him—even a titanic shadow dragon coils in the sky at his side—all awaiting their monarch\'s command as he readies to deliver final judgment. In this ultimate moment, he is no longer merely a hunter but the almighty sovereign of darkness, a Shadow Monarch standing toe-to-toe with a dragon god as the fate of two worlds hangs in the balance.'
   };
 
   static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic';
@@ -72,33 +71,21 @@ class AIImageService {
         return null;
       }
 
-      // Only preprocess when you really need it
-      String? faceImageDataUrl;
-      if (faceImagePath != null && kUseInstantID) {
-        final faceImageFile = File(faceImagePath);
-        final faceImageBytes = await faceImageFile.readAsBytes();
-        final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
-        
-        final faceImageBase64 = base64Encode(processedFaceBytes);
-        final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
-            ? 'image/jpeg' 
-            : 'image/png';
-        faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
+      if (faceImagePath == null) {
+        debugPrint('Warning: No face image provided for InstantID');
+        return null;
       }
 
-      // Add pose image if provided and using Instant-ID
-      String? poseImageDataUrl;
-      if (poseImagePath != null && kUseInstantID) {
-        final poseImageFile = File(poseImagePath);
-        final poseImageBytes = await poseImageFile.readAsBytes();
-        final processedPoseBytes = await _preprocessImage(Uint8List.fromList(poseImageBytes));
-        
-        final poseImageBase64 = base64Encode(processedPoseBytes);
-        final poseMime = poseImagePath.toLowerCase().endsWith('.jpg') || poseImagePath.toLowerCase().endsWith('.jpeg') 
-            ? 'image/jpeg' 
-            : 'image/png';
-        poseImageDataUrl = 'data:$poseMime;base64,$poseImageBase64';
-      }
+      // Preprocess the face image
+      final faceImageFile = File(faceImagePath);
+      final faceImageBytes = await faceImageFile.readAsBytes();
+      final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
+      
+      final faceImageBase64 = base64Encode(processedFaceBytes);
+      final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
+          ? 'image/jpeg' 
+          : 'image/png';
+      final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
 
       // Use custom prompt if provided, otherwise use the level-specific prompt
       final prompt = customPrompt ?? _levelPrompts[level] ?? _levelPrompts[1]!;
@@ -112,18 +99,13 @@ class AIImageService {
         'num_inference_steps': 25,
         'guidance_scale': 6,
         'seed': Random().nextInt(1 << 31),
-
-        // Add these only when Instant-ID is active
-        if (kUseInstantID) ...{
-          'image': faceImageDataUrl,
-          'ip_adapter_scale': 0.65,
-          'sdxl_weights': 'rocketdigitalai/animagine-xl-4.0',
-          if (poseImageDataUrl != null) 'pose_image': poseImageDataUrl,
-        },
+        'image': faceImageDataUrl,
+        'ip_adapter_scale': 0.65,
+        'sdxl_weights': 'animagine-xl-30',
       });
 
-      print('Starting image generation with prompt: $prompt');
-      print('Using 1024x1024 resolution for faster processing');
+      print('Starting image generation with face image and prompt: $prompt');
+      print('Using InstantID model for face preservation');
       
       // Make the API call to Replicate
       final response = await http.post(
