@@ -387,6 +387,15 @@ class MissionAdapter extends TypeAdapter<Mission> {
     final createdAt = DateTime.fromMillisecondsSinceEpoch(reader.readInt());
     final isCompleted = reader.readBool();
     
+    // Try to read isDaily flag if it exists (backward compatibility)
+    bool isDaily = false;
+    try {
+      isDaily = reader.readBool();
+    } catch (e) {
+      // If not available, default to false
+      isDaily = false;
+    }
+    
     return Mission(
       id: id,
       name: name,
@@ -395,6 +404,7 @@ class MissionAdapter extends TypeAdapter<Mission> {
       type: type,
       createdAt: createdAt,
       isCompleted: isCompleted,
+      isDaily: isDaily,
     );
   }
 
@@ -407,6 +417,7 @@ class MissionAdapter extends TypeAdapter<Mission> {
     writer.writeInt(obj.type.index);
     writer.writeInt(obj.createdAt.millisecondsSinceEpoch);
     writer.writeBool(obj.isCompleted);
+    writer.writeBool(obj.isDaily);
   }
 }
 

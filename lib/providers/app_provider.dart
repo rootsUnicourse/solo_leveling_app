@@ -78,6 +78,7 @@ class AppProvider extends ChangeNotifier {
     allMissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     
     // Separate active and completed missions
+    // Daily missions should only appear in the dailyMissions list, not in activeMissions
     _activeMissions = allMissions.where((mission) => !mission.isCompleted && !mission.isDaily).toList();
     _completedMissions = allMissions.where((mission) => mission.isCompleted && !mission.isDaily).toList();
     
