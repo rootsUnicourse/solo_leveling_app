@@ -25,35 +25,30 @@ class AIImageService {
     return Map<String, dynamic>.from(raw)..removeWhere((k, v) => v == null);
   }
 
-  // Level-specific prompts for Solo Leveling progression
-  static const Map<int, String> _levelPrompts = {
-    1: 'Sung Jin-Woo as a weak E-rank hunter, thin build with disheveled black hair, pale complexion, tired eyes with dark circles, wearing cheap basic black hunter gear, fearful expression, standing at dungeon entrance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    2: 'Sung Jin-Woo as an E-rank hunter beginning to awaken, thin body with slightly more definition, messy black hair, wearing basic hunter gear with small tears, subtle dark energy wisps around fingers, determined expression. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    3: 'Sung Jin-Woo as an awakening E-rank hunter, lean physique, black hair, focused eyes with dark circles fading, wearing reinforced black combat gear, shadows forming around hands, confident stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    4: 'Sung Jin-Woo as a rising E-rank hunter, more muscular physique, sharp dark eyes, black hair neatly styled, wearing improved tactical gear, shadows actively swirling around arms, combat-ready stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    5: 'Sung Jin-Woo as a D-rank hunter, athletic build with visible muscle tone, intense black eyes, neat black hair, wearing fitted black hunter gear, dual daggers, shadows forming basic shapes around hands, confident expression. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    6: 'Sung Jin-Woo as a stronger D-rank hunter, well-built physique, sharp intimidating gaze, black hair, wearing enhanced black combat outfit, multiple shadows forming around body, confident smirk, powerful stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    7: 'Sung Jin-Woo as an upper D-rank hunter, muscular build, intense focused eyes, black hair, wearing high-quality black combat gear with armor pieces, shadows forming distinct weapons, commanding presence. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    8: 'Sung Jin-Woo as a C-rank hunter, strong muscular build, fierce penetrating gaze, styled black hair, wearing advanced black tactical armor, manipulating multiple shadow soldiers, powerful aura. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    9: 'Sung Jin-Woo as a B-rank hunter, impressively muscular physique, cold calculating eyes, perfectly styled black hair, wearing elite black combat gear with reinforced plating, commanding several detailed shadow soldiers. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    10: 'Sung Jin-Woo as an A-rank hunter, powerful athletic body, piercing blue-black eyes, sleek black hair, wearing customized black battle armor, controlling an army of shadow soldiers, imposing presence. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    11: 'Sung Jin-Woo as a high A-rank hunter, perfectly sculpted muscular body, intense blue-black eyes that glow faintly, black hair with subtle blue highlights, wearing advanced black armor with blue accents, surrounded by elite shadow soldiers. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    12: 'Sung Jin-Woo at the threshold of S-rank, exceptional muscular physique, glowing blue-black eyes, styled black hair with blue shimmer, wearing high-tech black battle armor with blue energy lines, commanding Igris and Tank shadow soldiers. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    13: 'Sung Jin-Woo as a newly ascended S-rank hunter, perfect athletic build, piercing blue-black glowing eyes, black hair with blue aura, wearing sleek black armor with blue energy patterns, surrounded by an army of shadow soldiers. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    14: 'Sung Jin-Woo as the Shadow Monarch, godlike muscular physique, intense blue-black glowing eyes, black hair with ethereal blue aura, wearing royal black armor with blue energy flowing throughout, commanding Beru and elite shadow army. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    15: 'Sung Jin-Woo as the fully realized Shadow Monarch, perfect divine physique, fierce blue-black eyes radiating power, styled black hair with blue energy, wearing monarchs black armor with intricate blue energy patterns, complete shadow legion behind him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    20: 'Sung Jin-Woo as the Shadow Monarch in battle, flawless athletic build, glowing blue-black eyes, black hair flowing with blue energy, wearing battle-damaged black royal armor with blue energy circuits, dual black daggers crackling with blue shadow energy. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    25: 'Sung Jin-Woo as the Shadow Monarch facing Monarchs, imposing muscular build, intense blue-black eyes blazing with power, black hair with blue aura waves, wearing ornate black battle armor with blue energy coursing through it, shadow army rising behind him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    30: 'Sung Jin-Woo as the true Shadow Monarch, godlike physique, fierce blue-black eyes glowing with unlimited power, black hair with ethereal blue energy flowing, wearing intricate black monarch armor with pulsing blue energy veins, commanding a massive shadow legion. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    35: 'Sung Jin-Woo as the ascended Shadow Monarch, divine muscular form, intimidating blue-black eyes radiating immense power, black hair intertwined with blue energy, wearing evolved black monarch armor with complex blue energy patterns, shadow soldiers kneeling before him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    40: 'Sung Jin-Woo as the Shadow Sovereign, perfect godlike physique, intense blue-black eyes shining with unlimited power, black hair flowing with blue energy waves, wearing black sovereign armor with intricate blue energy circuits, full shadow army assembled behind him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    45: 'Sung Jin-Woo at his peak power, ultimate divine build, piercing blue-black eyes radiating overwhelming power, black hair surrounded by blue energy corona, wearing elaborate black sovereign battle armor with complex blue energy network, Igris, Beru, and elite shadows flanking him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    50: 'Sung Jin-Woo facing Antares, supreme godlike physique, fiercely glowing blue-black eyes, black hair crackling with blue energy, wearing celestial black monarch armor with brilliant blue energy flowing throughout, massive shadow legion rising behind him. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    55: 'Sung Jin-Woo after defeating Antares, ultimate divine form, intense blue-black eyes radiating absolute power, black hair with ethereal blue energy halo, wearing mythical black monarch armor with cosmic blue energy patterns, entire shadow army kneeling in allegiance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    60: 'Sung Jin-Woo as the absolute Shadow Monarch, perfect divine physique, commanding blue-black eyes glowing with unlimited power, black hair flowing with blue energy waves, wearing legendary black sovereign armor with intricate blue energy circuits, standing with arms crossed as ruler of shadows. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    65: 'Sung Jin-Woo as the Shadow Sovereign in his throne room, flawless godlike build, piercing blue-black eyes radiating unlimited power, black hair with a crown of blue energy, wearing royal black monarch armor with elaborate blue energy patterns, seated on a throne of shadows. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    70: 'Sung Jin-Woo at the absolute pinnacle of power, supreme divine physique, blazing blue-black eyes radiating cosmic power, black hair crowned with blue energy, wearing celestial black sovereign armor with complex blue energy circuits, creating a new shadow soldier with outstretched hand. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.'
+  // Replace the old 70-entry map with the compact milestones map (every 5 levels)
+  static const Map<int, String> _milestonePrompts = {
+    1 : 'Sung Jin-Woo as a weak E-rank hunter, thin build with disheveled black hair, pale complexion, tired eyes with dark circles, wearing cheap basic black hunter gear, fearful expression, standing at dungeon entrance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    5 : 'Sung Jin-Woo as a D-rank hunter, slightly broader shoulders, determined gaze, same basic gear, more confident stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    10: 'Sung Jin-Woo as a C-rank hunter, athletic build, reinforced black jacket, faint shadow wisps around fingers, focused expression. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    15: 'Sung Jin-Woo as a B-rank hunter, strong physique, combat vest, dual short daggers on belt, confident smirk, shadows forming around hands. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    20: 'Sung Jin-Woo as an A-rank hunter, impressive build, black tactical armour, 2 small shadow figures behind him, intense gaze. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    25: 'Sung Jin-Woo as a low S-rank hunter, powerful physique, glowing blue-black eyes, 5 shadow soldiers following him, enhanced combat gear. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    30: 'Sung Jin-Woo as a mid S-rank hunter, sleek armour with blue energy veins, thick blue aura surrounding him, commanding presence. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    35: 'Sung Jin-Woo as a high S-rank hunter, muscular build, black cape flowing, Igris and Tank at his side, powerful stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    40: 'Sung Jin-Woo as the awakening Shadow Monarch, perfect physique, royal black armour, blue energy crown halo, army of shadows rising. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    45: 'Sung Jin-Woo as the Shadow Monarch in battle, battle-worn armour, crackling daggers, fierce expression, surrounded by elite shadows. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    50: 'Sung Jin-Woo facing Antares, godlike physique, massive shadow legion behind him, fierce stare, power radiating. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    55: 'Sung Jin-Woo after defeating Antares, pristine armour, legion kneeling, commanding aura, victorious stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    60: 'Sung Jin-Woo as the absolute Shadow Sovereign, perfect form, arms crossed, faint throne silhouette behind, unlimited power. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    65: 'Sung Jin-Woo as the Shadow Sovereign, seated on throne of shadows, calm gaze, royal presence, shadows bowing. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
+    70: 'Sung Jin-Woo at the pinnacle of power, divine form, hand out-stretched creating new shadow soldier, ultimate power manifested. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.'
   };
+  
+  // Helper picks the last milestone ≤ level so you can still call with any level
+  static String _promptFor(int level) {
+    final keys = _milestonePrompts.keys.where((k) => k <= level).toList()..sort();
+    return keys.isEmpty ? _milestonePrompts[1]! : _milestonePrompts[keys.last]!;
+  }
 
   static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic, cartoon, 3D, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed face, deformed eyes, asymmetrical eyes, crossed eyes';
 
@@ -87,8 +82,8 @@ class AIImageService {
           : 'image/png';
       final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
 
-      // Use custom prompt if provided, otherwise use the level-specific prompt
-      final prompt = customPrompt ?? _levelPrompts[level] ?? _levelPrompts[1]!;
+      // Use custom prompt if provided, otherwise use the level-specific prompt using the helper
+      final prompt = customPrompt ?? _promptFor(level);
 
       // Create the input for the API with adjusted parameters for anime style
       final input = _cleanInput({
@@ -107,13 +102,13 @@ class AIImageService {
       print('Starting image generation with face image and prompt: $prompt');
       print('Using InstantID model for face preservation');
       
-      // Make the API call to Replicate
+      // Make the API call to Replicate with Prefer: wait header for synchronous mode
       final response = await http.post(
         Uri.parse(_apiUrl),
         headers: {
           'Authorization': 'Bearer $apiKey',
           'Content-Type': 'application/json',
-          'Prefer': 'wait=60',
+          'Prefer': 'wait', // Use synchronous mode instead of wait=60
         },
         body: jsonEncode({
           'version': _modelVersion,
@@ -131,11 +126,6 @@ class AIImageService {
       print('Prediction started: ${prediction['id']}');
       print('Initial status: ${prediction['status']}');
       
-      if (prediction['status'] == 'starting') {
-        print('Model is warming up - this may take a few minutes on first run');
-        print('Subsequent runs will be faster as the model stays warm');
-      }
-      
       // If the prediction is already complete, get the output URL
       if (prediction['status'] == 'succeeded' && prediction['output'] != null) {
         final resultUrl = prediction['output'][0];
@@ -143,7 +133,7 @@ class AIImageService {
         return await _downloadAndSaveImage(resultUrl, level, variationTag: 'immediate');
       }
 
-      // If not complete, poll for the result
+      // If not complete (model still warming up), poll for the result with exponential backoff
       return await _pollForResult(prediction['id'], apiKey, level);
     } catch (e) {
       print('Error generating hunter image: $e');
@@ -151,23 +141,20 @@ class AIImageService {
     }
   }
   
-  // Poll the API for result
+  // Poll the API for result with exponential backoff
   static Future<String?> _pollForResult(String predictionId, String apiKey, int level) async {
     bool completed = false;
     int attempts = 0;
-    const maxAttempts = 60; // 60 attempts with variable delay = 1-2 minutes max
-    int delaySeconds = 1;
+    const maxAttempts = 20; // Reduced from 60 to 20 with exponential backoff
+    int delaySec = 2; // Starting delay
 
     while (!completed && attempts < maxAttempts) {
       attempts++;
       print('Polling attempt $attempts/$maxAttempts for prediction $predictionId');
       
-      // Increase delay after 15 attempts if still starting
-      if (attempts > 15) {
-        delaySeconds = 2;
-      }
-      
-      await Future.delayed(Duration(seconds: delaySeconds));
+      await Future.delayed(Duration(seconds: delaySec));
+      // Exponential backoff with clamping
+      delaySec = (delaySec * 1.6).clamp(2, 30).round();
       
       try {
         final response = await http.get(
@@ -226,8 +213,8 @@ class AIImageService {
     }
 
     if (!completed) {
-      print('Image generation timed out after $maxAttempts attempts (${maxAttempts * delaySeconds} seconds)');
-      throw Exception('Image generation timed out after ${maxAttempts * delaySeconds} seconds');
+      print('Image generation timed out after $maxAttempts attempts');
+      throw Exception('Image generation timed out after $maxAttempts attempts');
     }
 
     return null;
@@ -330,7 +317,7 @@ class AIImageService {
       }
       
       // Create the prompt based on level
-      final String prompt = _levelPrompts[level] ?? _levelPrompts[1]!;
+      final String prompt = _promptFor(level);
       
       // In a real implementation, this would call your Node.js service
       // For example:

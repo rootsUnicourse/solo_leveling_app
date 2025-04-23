@@ -14,6 +14,9 @@ class BackgroundImageService {
   static const String generatingLevelsKey = 'generating_levels';
   static const String completedLevelsKey = 'completed_levels';
   
+  // Define the milestone levels to generate
+  static const List<int> milestoneLevels = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
+  
   // Initialize the background service
   static Future<void> initialize() async {
     if (Platform.isIOS) {
@@ -53,29 +56,27 @@ class BackgroundImageService {
       // Save the face image path
       await prefs.setString(faceImagePathKey, faceImagePath);
       
-      // Initialize the levels to generate (5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70)
-      final levelsToGenerate = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
-      await prefs.setStringList(generatingLevelsKey, levelsToGenerate.map((e) => e.toString()).toList());
+      // Initialize just the milestone levels to generate
+      await prefs.setStringList(generatingLevelsKey, milestoneLevels.map((e) => e.toString()).toList());
       
       // Initialize completed levels list
       await prefs.setStringList(completedLevelsKey, []);
       
-      debugPrint('Background image generation initialized for 15 levels (1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70)');
+      debugPrint('Background image generation initialized for milestone levels: ${milestoneLevels.join(", ")}');
     } catch (e) {
       debugPrint('Error initializing background generation: $e');
     }
   }
   
-  // Start generating images for all levels in the background
+  // Start generating images for all milestone levels in the background
   static Future<void> startGeneratingImages(String faceImagePath) async {
     try {
       // Store the face image path
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(faceImagePathKey, faceImagePath);
       
-      // Set up the list of levels to generate
-      final List<int> levelsToGenerate = [1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70];
-      await prefs.setStringList(generatingLevelsKey, levelsToGenerate.map((e) => e.toString()).toList());
+      // Set up the list of milestone levels to generate
+      await prefs.setStringList(generatingLevelsKey, milestoneLevels.map((e) => e.toString()).toList());
       await prefs.setStringList(completedLevelsKey, []);
       
       if (Platform.isIOS) {
@@ -95,7 +96,7 @@ class BackgroundImageService {
         );
       }
       
-      debugPrint('Background image generation scheduled for 15 levels');
+      debugPrint('Background image generation scheduled for milestone levels');
     } catch (e) {
       debugPrint('Error scheduling background tasks: $e');
     }
@@ -109,7 +110,7 @@ class BackgroundImageService {
       final List<String> completedLevels = prefs.getStringList(completedLevelsKey) ?? [];
       
       return {
-        'total': generatingLevels.length + completedLevels.length,
+        'total': milestoneLevels.length,
         'completed': completedLevels.length,
         'completedLevels': completedLevels.map((e) => int.parse(e)).toList(),
         'inProgress': generatingLevels.map((e) => int.parse(e)).toList(),
@@ -117,16 +118,26 @@ class BackgroundImageService {
     } catch (e) {
       debugPrint('Error getting generation status: $e');
       return {
-        'total': 0,
+        'total': milestoneLevels.length,
         'completed': 0,
         'completedLevels': <int>[],
-        'inProgress': <int>[],
+        'inProgress': milestoneLevels,
       };
     }
   }
   
+  // Check if image exists for a specific level
+  // For non-milestone levels, it returns the nearest lower milestone level image
   static Future<bool> hasImagesForLevel(int level) async {
     try {
+      // If it's not a milestone level, find the nearest lower milestone
+      if (!milestoneLevels.contains(level)) {
+        int nearestLower = milestoneLevels
+            .where((l) => l <= level)
+            .fold(1, (max, l) => l > max ? l : max);
+        level = nearestLower;
+      }
+      
       // Check if completed in background generation
       final prefs = await SharedPreferences.getInstance();
       final List<String> completedLevels = prefs.getStringList(completedLevelsKey) ?? [];
@@ -159,8 +170,8 @@ class BackgroundImageService {
       bool isComplete = false;
       while (!isComplete) {
         isComplete = await _generateImages();
-        // Only wait 5 seconds between attempts instead of 5 minutes
-        await Future.delayed(const Duration(seconds: 5));
+        // Only wait 10 seconds between attempts
+        await Future.delayed(const Duration(seconds: 10));
       }
       debugPrint('Background image generation completed');
     } catch (e) {
@@ -207,7 +218,7 @@ Future<bool> _generateImages() async {
         return false;
       }
     } else {
-      // Failed to generate, add back to the queue
+      // Failed to generate, add back to the queue but at the end
       generatingLevels.add(levelStr);
       await prefs.setStringList(BackgroundImageService.generatingLevelsKey, generatingLevels);
       debugPrint('Failed to generate image for level $level, will retry later');
