@@ -15,6 +15,7 @@ class MissionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<AppProvider>(context);
+    final missionTypeColor = provider.getMissionTypeColor(mission.type);
 
     return Slidable(
       endActionPane: ActionPane(
@@ -39,7 +40,7 @@ class MissionItem extends StatelessWidget {
           side: BorderSide(
             color: mission.isCompleted 
               ? Colors.green.withOpacity(0.5) 
-              : Colors.grey.withOpacity(0.2),
+              : missionTypeColor.withOpacity(0.5),
             width: mission.isCompleted ? 2 : 1,
           ),
         ),
@@ -56,16 +57,25 @@ class MissionItem extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
-              : null,
+              : LinearGradient(
+                  colors: [
+                    missionTypeColor.withOpacity(0.2),
+                    Colors.grey.shade800,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
           ),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             leading: CircleAvatar(
-              backgroundColor: provider.getMissionTypeColor(mission.type).withOpacity(0.3),
+              backgroundColor: mission.isCompleted
+                ? Colors.green.withOpacity(0.3)
+                : missionTypeColor.withOpacity(0.3),
               radius: 24,
               child: Icon(
                 provider.getMissionTypeIcon(mission.type),
-                color: provider.getMissionTypeColor(mission.type),
+                color: mission.isCompleted ? Colors.green : missionTypeColor,
                 size: 24,
               ),
             ),
@@ -112,7 +122,9 @@ class MissionItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: provider.getMissionTypeColor(mission.type).withOpacity(0.3),
+                        color: mission.isCompleted
+                          ? Colors.green.withOpacity(0.3)
+                          : missionTypeColor.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -120,7 +132,7 @@ class MissionItem extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: provider.getMissionTypeColor(mission.type),
+                          color: mission.isCompleted ? Colors.green : missionTypeColor,
                         ),
                       ),
                     ),
@@ -129,7 +141,7 @@ class MissionItem extends StatelessWidget {
               ],
             ),
             trailing: Checkbox(
-              activeColor: Colors.green,
+              activeColor: mission.isCompleted ? Colors.green : missionTypeColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
