@@ -28,17 +28,17 @@ class AIImageService {
   static const bool kPureAnime = true;
   static double get _animeScale => kPureAnime ? 0.55 : 0.8;
   
-  // Gradually decrease face lock strength as level increases
-  static double _animeScaleFor(int lvl) => 0.65 - (lvl * 0.005).clamp(0, 0.3);
+  // Gradually decrease face lock strength as level increases, with stronger 2D bias
+  static double _animeScaleFor(int lvl) => (0.18 - lvl * 0.003).clamp(0.08, 0.18);
   
-  // Valid anime checkpoint from Replicate's allowed list
-  static const String _animeCheckpoint = 'animagine-xl-30';  // Exact string allowed by API
+  // Valid anime checkpoint from Replicate's allowed list - exact name
+  static const String _animeCheckpoint = 'animagine-xl-30';  // exact name from Replicate's enum
   
   // ── Improved prompt style for stronger anime look ──
   static const String _promptPrefix =
     // strong anime keywords first, ordered by "power"
-    'masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, '
-    'cel-shaded, vibrant colors, 1person, head-and-shoulders, looking at viewer';
+    'anime illustration, 2d illustration, cel-shaded, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, '
+    'vibrant colors, 1person, head-and-shoulders, looking at viewer';
   
   // Helper function to remove null values from map
   static Map<String, dynamic> _cleanInput(Map<String, dynamic> raw) {
@@ -74,7 +74,7 @@ class AIImageService {
   // Updated negative prompt to strongly avoid photorealism and NSFW content
   static const String _negativePrompt =
     'nsfw, nude, nudity, exposed skin, lingerie, cleavage, suggestive, erotic, bare shoulders, '
-    'photorealistic, realistic skin, photographic, real photo, 3d, '
+    'photorealistic, realistic skin, photographic, real photo, 3d, realistic, photo, photographic, skin pores, hyperrealistic, '
     'render, cgi, doll, plastic, blurry, lowres, watermark, text, logo, '
     'extra limbs, hands, arms, weapon, background, out-of-frame, bad anatomy, '
     'worst quality, distorted, deformed, ugly, grainy';
@@ -156,44 +156,12 @@ class AIImageService {
         debugPrint('Failed to start prediction: ${response.statusCode}');
         debugPrint('Response body: ${response.body}');
         
-        // If we get a 422 error about sdxl_weights, retry without that parameter
+        // If we get a 422 error about sdxl_weights, throw an exception instead of removing the parameter
         if (response.statusCode == 422 && response.body.contains('sdxl_weights')) {
-          debugPrint('Retrying without sdxl_weights parameter');
-          
-          // Remove the sdxl_weights parameter and try again
-          input.remove('sdxl_weights');
-          
-          final retryResponse = await http.post(
-            Uri.parse(_apiUrl),
-            headers: {
-              'Authorization': 'Bearer $apiKey',
-              'Content-Type': 'application/json',
-              'Prefer': 'wait',
-            },
-            body: jsonEncode({
-              'version': _modelVersion,
-              'input': input
-            }),
+          throw Exception(
+            'Invalid sdxl_weights: "$_animeCheckpoint".\n'
+            'Choose one of the allowed values listed in the response body.'
           );
-          
-          if (retryResponse.statusCode != 201 && retryResponse.statusCode != 202) {
-            debugPrint('Retry also failed: ${retryResponse.statusCode}');
-            debugPrint('Retry response body: ${retryResponse.body}');
-            throw Exception('Failed to start prediction: ${retryResponse.statusCode}');
-          }
-          
-          final retryPrediction = jsonDecode(retryResponse.body);
-          debugPrint('Retry prediction started: ${retryPrediction['id']}');
-          debugPrint('Retry initial status: ${retryPrediction['status']}');
-          
-          if (retryPrediction['status'] == 'succeeded' && retryPrediction['output'] != null) {
-            final resultUrl = retryPrediction['output'][0];
-            debugPrint('Retry image generation completed immediately. Output URL: $resultUrl');
-            return await _downloadAndSaveImage(resultUrl, level, variationTag: 'immediate-retry');
-          }
-          
-          // Pass canRetryNSFW: false to prevent infinite loop
-          return await _pollForResult(retryPrediction['id'], apiKey, level, canRetryNSFW: false, faceImagePath: faceImagePath);
         }
         
         throw Exception('Failed to start prediction: ${response.statusCode}');
@@ -354,6 +322,7 @@ class AIImageService {
         'seed': seed,
         'image': faceImageDataUrl,
         'ip_adapter_scale': _animeScaleFor(level),
+        'sdxl_weights': _animeCheckpoint, // Keep the anime checkpoint for NSFW retry
       });
 
       debugPrint('Starting safer image generation with adjusted prompt and stricter negative prompt');
