@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'dart:typed_data';
 import 'dart:math';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AIImageService {
   // Use the standard predictions endpoint with model version
@@ -20,37 +21,63 @@ class AIImageService {
   static const bool kUseInstantID = true; // Enable InstantID to use face images
   static const String _modelVersion = kUseInstantID ? _modelVersionInstantID : _modelVersionAnimagine;
   
+  // Fixed seed for consistent progression
+  static const int _fixedSeed = 42;
+  
+  // Toggle for stronger anime stylization
+  static const bool kPureAnime = true;
+  static double get _animeScale => kPureAnime ? 0.55 : 0.8;
+  
+  // Gradually decrease face lock strength as level increases
+  static double _animeScaleFor(int lvl) => 0.65 - (lvl * 0.005).clamp(0, 0.3);
+  
+  // Valid anime checkpoint from Replicate's allowed list
+  static const String _animeCheckpoint = 'animagine-xl-30';  // Exact string allowed by API
+  
+  // ── Improved prompt style for stronger anime look ──
+  static const String _promptPrefix =
+    // strong anime keywords first, ordered by "power"
+    'masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, '
+    'cel-shaded, vibrant colors, 1person, head-and-shoulders, looking at viewer';
+  
   // Helper function to remove null values from map
   static Map<String, dynamic> _cleanInput(Map<String, dynamic> raw) {
     return Map<String, dynamic>.from(raw)..removeWhere((k, v) => v == null);
   }
 
-  // Replace the old 70-entry map with the compact milestones map (every 5 levels)
+  // Updated milestone prompts for Solo Leveling character progression
   static const Map<int, String> _milestonePrompts = {
-    1 : 'Sung Jin-Woo as a weak E-rank hunter, thin build with disheveled black hair, pale complexion, tired eyes with dark circles, wearing cheap basic black hunter gear, fearful expression, standing at dungeon entrance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    5 : 'Sung Jin-Woo as a D-rank hunter, slightly broader shoulders, determined gaze, same basic gear, more confident stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    10: 'Sung Jin-Woo as a C-rank hunter, athletic build, reinforced black jacket, faint shadow wisps around fingers, focused expression. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    15: 'Sung Jin-Woo as a B-rank hunter, strong physique, combat vest, dual short daggers on belt, confident smirk, shadows forming around hands. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    20: 'Sung Jin-Woo as an A-rank hunter, impressive build, black tactical armour, 2 small shadow figures behind him, intense gaze. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    25: 'Sung Jin-Woo as a low S-rank hunter, powerful physique, glowing blue-black eyes, 5 shadow soldiers following him, enhanced combat gear. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    30: 'Sung Jin-Woo as a mid S-rank hunter, sleek armour with blue energy veins, thick blue aura surrounding him, commanding presence. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    35: 'Sung Jin-Woo as a high S-rank hunter, muscular build, black cape flowing, Igris and Tank at his side, powerful stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    40: 'Sung Jin-Woo as the awakening Shadow Monarch, perfect physique, royal black armour, blue energy crown halo, army of shadows rising. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    45: 'Sung Jin-Woo as the Shadow Monarch in battle, battle-worn armour, crackling daggers, fierce expression, surrounded by elite shadows. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    50: 'Sung Jin-Woo facing Antares, godlike physique, massive shadow legion behind him, fierce stare, power radiating. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    55: 'Sung Jin-Woo after defeating Antares, pristine armour, legion kneeling, commanding aura, victorious stance. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    60: 'Sung Jin-Woo as the absolute Shadow Sovereign, perfect form, arms crossed, faint throne silhouette behind, unlimited power. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    65: 'Sung Jin-Woo as the Shadow Sovereign, seated on throne of shadows, calm gaze, royal presence, shadows bowing. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.',
-    70: 'Sung Jin-Woo at the pinnacle of power, divine form, hand out-stretched creating new shadow soldier, ultimate power manifested. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.'
+    1 : 'the user\'s face with a calm determined expression, wearing a simple blue hoodie and jeans (casual style), very faint purple glow in the eyes, slight wisps of blue-black mist around the shoulders, Solo Leveling inspired',
+    5 : 'the user\'s face with a confident smirk, wearing a simple t-shirt with high collar that fully covers chest and shoulders (casual attire), faint purple gleam in the eyes, a barely visible purple aura flickering around the head, wisps of shadow mist, Solo Leveling inspired',
+    10: 'the user\'s face with a focused serious expression, wearing a dark hoodie with high collar that fully covers chest and shoulders, eyes lightly glowing purple, soft purple aura beginning to swirl at the shoulders, thin blue-black tendrils of shadow forming behind, Solo Leveling inspired',
+    15: 'the user\'s face with a determined gaze, dressed in a black jacket with high collar that fully covers chest and shoulders, eyes shining with a soft purple glow, moderate purple aura enveloping the upper torso, blue-black shadow mist curling around the neck, Solo Leveling inspired',
+    20: 'the user\'s face with a fierce glare, wearing a sleek dark leather jacket with high collar that fully covers chest and shoulders, eyes bright purple, a strong pulsing purple aura around the head and shoulders, dark blue-black shadow tendrils swirling intensely, Solo Leveling inspired',
+    25: 'the user\'s face with a narrowed, intense look, dressed in a fitted black jacket with high collar that fully covers chest and shoulders, subtle purple accents, eyes glowing deep purple, vibrant purple aura radiating outward, thick blue-black shadow mist swirling wildly around the bust, Solo Leveling inspired',
+    30: 'the user\'s face with a serious, commanding expression, wearing a dark leather coat with high collar that fully covers chest and shoulders (no armor plating yet), eyes fully purple and blazing, brilliant purple aura flaring behind, heavy blue-black shadow tendrils twisting around the shoulders, Solo Leveling inspired',
+    35: 'the user\'s face with a smirk of confidence, clad in a sleek black coat with high collar that fully covers chest and shoulders, eyes glowing bright purple, intense violet aura now radiating around the head, swirling inky-blue shadow smoke curling behind, Solo Leveling inspired',
+    40: 'the user\'s face with a bold, almost aggressive grin, wearing a dark coat with high collar that fully covers chest and shoulders, eyes intensely purple-bright, powerful purple aura pulsating around the bust, thick blue-black shadow tendrils fanning out behind, Solo Leveling inspired',
+    45: 'the user\'s face with a commanding glare, dressed in a black leather jacket with high collar that fully covers chest and shoulders (no visible weapon), eyes blazing bright purple, brilliant purple aura and energy crackles visible, swirling black-purple shadow mist and tendrils enveloping the shoulders, Solo Leveling inspired',
+    50: 'the user\'s face with a ferocious, determined scowl, wearing a fitted black coat with high collar that fully covers chest and shoulders, subtle design, eyes glowing vibrant purple, intense purple aura surging around him, thick bluish-black shadow fog swirling and dancing behind the bust, Solo Leveling inspired',
+    55: 'the user\'s face with a savage grin and narrowed eyes, dressed in a black leather trench coat with high collar that fully covers chest and shoulders, eyes shining piercing purple, overwhelming purple aura and crackling energy around his form, heavy dark shadow mist with visible tendrils clinging to the shoulders, Solo Leveling inspired',
+    60: 'the user\'s face with an intense, almost predatory stare, wearing a high-collared black coat with subtle shadow-armor plating on the shoulders that fully covers chest and shoulders, eyes glowing luminous purple, raging purple aura enveloping the upper body, thick blue-black shadow armor fragments and mist swirling fiercely around, Solo Leveling inspired',
+    65: 'the user\'s face with a brutal confident smile, outfitted in a dark coat with high collar that fully covers chest and shoulders, emerging shadow-armor details on chest and shoulders, eyes blazing bright purple with dark sclera, overwhelming purple aura and shadow energy radiating, black-blue tendrils of shadow swirling like wings behind, Solo Leveling inspired',
+    70: 'the user\'s face with a fearless, commanding expression, fully in a dark outfit with high collar that fully covers chest and shoulders, prominent shadow-armor plating on shoulders, eyes fully glowing intense purple, colossal purple-black aura swirling violently, massive blue-black shadow mist swirling like spikes behind him, Solo Leveling inspired'
   };
   
   // Helper picks the last milestone ≤ level so you can still call with any level
   static String _promptFor(int level) {
     final keys = _milestonePrompts.keys.where((k) => k <= level).toList()..sort();
-    return keys.isEmpty ? _milestonePrompts[1]! : _milestonePrompts[keys.last]!;
+    final levelPrompt = keys.isEmpty ? _milestonePrompts[1]! : _milestonePrompts[keys.last]!;
+    return '$_promptPrefix, $levelPrompt.';
   }
 
-  static const String _negativePrompt = 'blurry, low quality, distorted, deformed, ugly, bad anatomy, bad proportions, female, feminine features, unrealistic proportions, western art style, photorealistic, cartoon, 3D, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed face, deformed eyes, asymmetrical eyes, crossed eyes';
+  // Updated negative prompt to strongly avoid photorealism and NSFW content
+  static const String _negativePrompt =
+    'nsfw, nude, nudity, exposed skin, lingerie, cleavage, suggestive, erotic, bare shoulders, '
+    'photorealistic, realistic skin, photographic, real photo, 3d, '
+    'render, cgi, doll, plastic, blurry, lowres, watermark, text, logo, '
+    'extra limbs, hands, arms, weapon, background, out-of-frame, bad anatomy, '
+    'worst quality, distorted, deformed, ugly, grainy';
 
   // Generate a hunter image for the specified level
   static Future<String?> generateHunterImage(
@@ -83,24 +110,33 @@ class AIImageService {
       final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
 
       // Use custom prompt if provided, otherwise use the level-specific prompt using the helper
-      final prompt = customPrompt ?? _promptFor(level);
+      const _angles = ['¾ view left', '¾ view right', 'front view', 'slight low-angle'];
+      const _lights = ['cool rim-light', 'warm back-light', 'dramatic top-light', 'purple under-glow'];
+      final suffix = '${_angles[level % 4]}, ${_lights[level % 4]}';
+      final prompt = '${customPrompt ?? _promptFor(level)}, $suffix';
 
-      // Create the input for the API with adjusted parameters for anime style
+      // Higher resolution for top-tier levels
+      final imageSize = level >= 60 ? 1024 : 768;
+      
+      // Generate unique, deterministic seed per level
+      final seed = (level * 7919) % 2147483647; // 2^31-1
+
+      // Create the input for the API with improved parameters for anime style portrait
       final input = _cleanInput({
-        'prompt': prompt,
+        'prompt': '$prompt, wearing a high-collar black coat that fully covers chest and shoulders',
         'negative_prompt': _negativePrompt,
-        'width': 1024,
-        'height': 1024,
+        'width': imageSize,
+        'height': imageSize,
         'num_inference_steps': 30,
         'guidance_scale': 7.5,
-        'seed': Random().nextInt(1 << 31),
+        'seed': seed,
         'image': faceImageDataUrl,
-        'ip_adapter_scale': 0.8,
-        'sdxl_weights': 'animagine-xl-30',
+        'ip_adapter_scale': _animeScaleFor(level), // Use level-specific face lock strength
+        'sdxl_weights': _animeCheckpoint, // Using exact value from allowed list
       });
 
-      print('Starting image generation with face image and prompt: $prompt');
-      print('Using InstantID model for face preservation');
+      debugPrint('Starting image generation with face image');
+      debugPrint('Using InstantID model with anime stylization');
       
       // Make the API call to Replicate with Prefer: wait header for synchronous mode
       final response = await http.post(
@@ -117,107 +153,246 @@ class AIImageService {
       );
 
       if (response.statusCode != 201 && response.statusCode != 202) {
-        print('Failed to start prediction: ${response.statusCode}');
-        print('Response body: ${response.body}');
+        debugPrint('Failed to start prediction: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
+        
+        // If we get a 422 error about sdxl_weights, retry without that parameter
+        if (response.statusCode == 422 && response.body.contains('sdxl_weights')) {
+          debugPrint('Retrying without sdxl_weights parameter');
+          
+          // Remove the sdxl_weights parameter and try again
+          input.remove('sdxl_weights');
+          
+          final retryResponse = await http.post(
+            Uri.parse(_apiUrl),
+            headers: {
+              'Authorization': 'Bearer $apiKey',
+              'Content-Type': 'application/json',
+              'Prefer': 'wait',
+            },
+            body: jsonEncode({
+              'version': _modelVersion,
+              'input': input
+            }),
+          );
+          
+          if (retryResponse.statusCode != 201 && retryResponse.statusCode != 202) {
+            debugPrint('Retry also failed: ${retryResponse.statusCode}');
+            debugPrint('Retry response body: ${retryResponse.body}');
+            throw Exception('Failed to start prediction: ${retryResponse.statusCode}');
+          }
+          
+          final retryPrediction = jsonDecode(retryResponse.body);
+          debugPrint('Retry prediction started: ${retryPrediction['id']}');
+          debugPrint('Retry initial status: ${retryPrediction['status']}');
+          
+          if (retryPrediction['status'] == 'succeeded' && retryPrediction['output'] != null) {
+            final resultUrl = retryPrediction['output'][0];
+            debugPrint('Retry image generation completed immediately. Output URL: $resultUrl');
+            return await _downloadAndSaveImage(resultUrl, level, variationTag: 'immediate-retry');
+          }
+          
+          // Pass canRetryNSFW: false to prevent infinite loop
+          return await _pollForResult(retryPrediction['id'], apiKey, level, canRetryNSFW: false, faceImagePath: faceImagePath);
+        }
+        
         throw Exception('Failed to start prediction: ${response.statusCode}');
       }
 
       final prediction = jsonDecode(response.body);
-      print('Prediction started: ${prediction['id']}');
-      print('Initial status: ${prediction['status']}');
+      debugPrint('Prediction started: ${prediction['id']}');
+      debugPrint('Initial status: ${prediction['status']}');
       
       // If the prediction is already complete, get the output URL
       if (prediction['status'] == 'succeeded' && prediction['output'] != null) {
         final resultUrl = prediction['output'][0];
-        print('Image generation completed immediately. Output URL: $resultUrl');
+        debugPrint('Image generation completed immediately. Output URL: $resultUrl');
         return await _downloadAndSaveImage(resultUrl, level, variationTag: 'immediate');
       }
 
       // If not complete (model still warming up), poll for the result with exponential backoff
-      return await _pollForResult(prediction['id'], apiKey, level);
+      return await _pollForResult(prediction['id'], apiKey, level, faceImagePath: faceImagePath);
     } catch (e) {
-      print('Error generating hunter image: $e');
+      debugPrint('Error generating hunter image: $e');
       return null;
     }
   }
   
   // Poll the API for result with exponential backoff
-  static Future<String?> _pollForResult(String predictionId, String apiKey, int level) async {
-    bool completed = false;
-    int attempts = 0;
-    const maxAttempts = 20; // Reduced from 60 to 20 with exponential backoff
-    int delaySec = 2; // Starting delay
+  static Future<String?> _pollForResult(
+    String predictionId,
+    String apiKey,
+    int level, {
+    bool canRetryNSFW = true, // Allow only one retry for NSFW
+    String? faceImagePath,    // Added parameter to pass face image path directly
+  }) async {
+    const terminal = {'succeeded', 'failed', 'canceled'};
+    int delaySec = 2; // Fixed initial delay as integer
 
-    while (!completed && attempts < maxAttempts) {
-      attempts++;
-      print('Polling attempt $attempts/$maxAttempts for prediction $predictionId');
+    for (var attempt = 1; attempt <= 10; attempt++) { // Reduced from 20 to 10 attempts
+      debugPrint('Polling attempt $attempt/10 for prediction $predictionId');
       
       await Future.delayed(Duration(seconds: delaySec));
-      // Exponential backoff with clamping
-      delaySec = (delaySec * 1.6).clamp(2, 30).round();
+      delaySec = (delaySec * 1.6).toInt().clamp(2, 15); // Fixed integer calculation
       
       try {
         final response = await http.get(
-          Uri.parse('https://api.replicate.com/v1/predictions/$predictionId'),
+          Uri.parse('$_apiUrl/$predictionId'),
           headers: {
             'Authorization': 'Bearer $apiKey',
             'Content-Type': 'application/json',
           },
         );
 
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final status = data['status'];
-          print('Current status: $status');
+        if (response.statusCode != 200) continue; // network hiccup → try again
+        
+        final data = jsonDecode(response.body);
+        final status = data['status'] as String;
+        debugPrint('Current status: $status');
+        
+        if (status == 'succeeded') {
+          final output = data['output'];
           
-          if (status == 'succeeded') {
-            completed = true;
-            final output = data['output'];
-            
-            // Handle both array and string output formats
-            String? imageUrl;
-            if (output is List && output.isNotEmpty) {
-              imageUrl = output[0];
-            } else if (output is String) {
-              imageUrl = output;
-            }
-            
-            if (imageUrl != null) {
-              print('Image generation completed successfully!');
-              return await _downloadAndSaveImage(imageUrl, level);
-            } else {
-              print('No output URL found in successful response');
-              print('Full response: $data');
-              throw Exception('No output URL found in successful response');
-            }
-          } else if (status == 'failed') {
-            print('Image generation failed: ${data['error']}');
-            throw Exception('Image generation failed: ${data['error']}');
-          } else if (status == 'canceled') {
-            print('Image generation was canceled');
-            throw Exception('Image generation was canceled');
-          } else if (status == 'starting') {
-            print('Model is still warming up...');
-          } else {
-            print('Current progress: ${data['logs'] ?? 'No progress info available'}');
+          // Handle both array and string output formats
+          String? imageUrl;
+          if (output is List && output.isNotEmpty) {
+            imageUrl = output[0];
+          } else if (output is String) {
+            imageUrl = output;
           }
-        } else {
-          print('Poll request failed with status: ${response.statusCode}');
-          print('Response body: ${response.body}');
-          // Don't throw here, just continue polling
+          
+          if (imageUrl != null) {
+            debugPrint('Image generation completed successfully!');
+            return await _downloadAndSaveImage(imageUrl, level);
+          } else {
+            debugPrint('No output URL found in successful response');
+            throw Exception('No output URL found in successful response');
+          }
         }
+        
+        if (status == 'failed') {
+          final err = data['error']?.toString() ?? 'unknown error';
+          debugPrint('Image generation failed: $err');
+          
+          // Try a single extra attempt if it's NSFW and we haven't tried already
+          if (canRetryNSFW && err.contains('NSFW') && faceImagePath != null) {
+            debugPrint('NSFW detected - attempting one retry with stricter prompts');
+            return await _retryWithSafePrompt(level, apiKey, err, faceImagePath);
+          }
+          
+          throw Exception('Generation failed: $err');
+        }
+        
+        if (status == 'canceled') {
+          debugPrint('Image generation was canceled');
+          throw Exception('Generation was canceled on the server');
+        }
+        
+        // Otherwise it's still in progress, continue polling
+        
       } catch (e) {
-        print('Error during polling: $e');
-        // Don't throw here, just continue polling
+        if (e is Exception && (e.toString().contains('Generation failed') || 
+            e.toString().contains('canceled'))) {
+          // Re-throw terminal errors
+          rethrow;
+        }
+        debugPrint('Error during polling: $e');
+        // Re-throw all exceptions to break the polling loop
+        rethrow;
       }
     }
 
-    if (!completed) {
-      print('Image generation timed out after $maxAttempts attempts');
-      throw Exception('Image generation timed out after $maxAttempts attempts');
-    }
+    debugPrint('Image generation timed out after 10 attempts');
+    throw Exception('Prediction timed-out after 10 attempts');
+  }
+  
+  // Helper: retry with a safer prompt
+  static Future<String?> _retryWithSafePrompt(
+    int level,
+    String apiKey,
+    String originalError,
+    String faceImagePath  // Direct parameter instead of preferences lookup
+  ) async {
+    debugPrint('NSFW flagged. Retrying with stricter negative prompt...');
+    
+    // Add extra explicit NSFW blockers beyond what's already in _negativePrompt
+    final saferNegativePrompt = 
+      '$_negativePrompt, extremely detailed nsfw content, private parts, '
+      'lower body, upper body, torso';
+    
+    try {
+      // Preprocess the face image
+      final faceImageFile = File(faceImagePath);
+      final faceImageBytes = await faceImageFile.readAsBytes();
+      final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
+      
+      final faceImageBase64 = base64Encode(processedFaceBytes);
+      final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
+          ? 'image/jpeg' 
+          : 'image/png';
+      final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
 
-    return null;
+      // Use the level-specific prompt but with different seed and safer negative prompt
+      const _angles = ['¾ view left', '¾ view right', 'front view', 'slight low-angle'];
+      const _lights = ['cool rim-light', 'warm back-light', 'dramatic top-light', 'purple under-glow'];
+      final suffix = '${_angles[level % 4]}, ${_lights[level % 4]}';
+      final prompt = '${_promptFor(level)}, $suffix';
+      
+      final imageSize = level >= 60 ? 1024 : 768;
+      
+      // Use a different but still deterministic seed for retry
+      final seed = ((level * 7919) + 100) % 2147483647;
+
+      // Create the input with safer parameters
+      final input = _cleanInput({
+        'prompt': '$prompt, wearing a high-collar black coat that fully covers chest and shoulders, fully clothed, modest outfit',
+        'negative_prompt': saferNegativePrompt,
+        'width': imageSize,
+        'height': imageSize,
+        'num_inference_steps': 30,
+        'guidance_scale': 7.5,
+        'seed': seed,
+        'image': faceImageDataUrl,
+        'ip_adapter_scale': _animeScaleFor(level),
+      });
+
+      debugPrint('Starting safer image generation with adjusted prompt and stricter negative prompt');
+      
+      // Make the API call to Replicate
+      final response = await http.post(
+        Uri.parse(_apiUrl),
+        headers: {
+          'Authorization': 'Bearer $apiKey',
+          'Content-Type': 'application/json',
+          'Prefer': 'wait',
+        },
+        body: jsonEncode({
+          'version': _modelVersion,
+          'input': input
+        }),
+      );
+
+      if (response.statusCode != 201 && response.statusCode != 202) {
+        debugPrint('Failed to start safer prediction: ${response.statusCode}');
+        throw Exception('Failed to start safer prediction: ${response.statusCode}');
+      }
+
+      final prediction = jsonDecode(response.body);
+      
+      // If the prediction is already complete, get the output URL
+      if (prediction['status'] == 'succeeded' && prediction['output'] != null) {
+        final resultUrl = prediction['output'][0];
+        debugPrint('Safer image generation completed immediately. Output URL: $resultUrl');
+        return await _downloadAndSaveImage(resultUrl, level, variationTag: 'safer');
+      }
+
+      // If not complete, poll for the result but don't allow further NSFW retries
+      return await _pollForResult(prediction['id'], apiKey, level, canRetryNSFW: false, faceImagePath: faceImagePath);
+    } catch (e) {
+      debugPrint('Error in safer image generation: $e');
+      // Don't swallow the error during retry
+      throw Exception('Failed to generate safer image: $e');
+    }
   }
   
   // Download and save the generated image
@@ -356,7 +531,7 @@ class AIImageService {
     try {
       final decoded = img.decodeImage(imageBytes);
       if (decoded == null) {
-        print('Failed to decode image');
+        debugPrint('Failed to decode image');
         return imageBytes;
       }
       
@@ -366,27 +541,17 @@ class AIImageService {
       // Encode as JPEG with 80% quality
       return Uint8List.fromList(img.encodeJpg(resized, quality: 80));
     } catch (e) {
-      print('Error preprocessing image: $e');
+      debugPrint('Error preprocessing image: $e');
       return imageBytes; // Fallback to original bytes
     }
-  }
-
-  static Future<String?> _getApiKey() async {
-    // Get the API key from dart-define
-    const apiKey = String.fromEnvironment('REPLICATE_API_KEY');
-    if (apiKey.isEmpty) {
-      print('Warning: REPLICATE_API_KEY is not set in environment variables');
-      return null;
-    }
-    return apiKey;
   }
 
   static Future<List<String>> generateMultipleErankImages(String faceImagePath) async {
     final List<String> imagePaths = [];
     final List<String> variations = [
-      "Sung Jin-Woo as an E-rank hunter, lean build with disheveled black hair, wearing basic black hunter gear, fearful yet determined expression, standing defensively. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.",
-      "Sung Jin-Woo as an E-rank hunter, thin physique, messy black hair, wearing simple black jacket and pants, crouching in stealth position, focused expression. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal.",
-      "Sung Jin-Woo as an E-rank hunter, slender build, neat black hair, wearing tactical black gear, standing confidently with arms crossed, slight smirk. High-quality anime style, Japanese manga art style, Solo Leveling accurate portrayal."
+      "$_promptPrefix neutral expression, wearing a simple blue hoodie. Solo Leveling style, E-rank hunter appearance, no visible aura or effects, minimal styling.",
+      "$_promptPrefix slight smile, wearing a simple dark jacket. Solo Leveling style, E-rank hunter appearance, very faint blue aura, clean lines.",
+      "$_promptPrefix determined expression, wearing a casual outfit with hood. Solo Leveling style, E-rank hunter appearance, subtle styling."
     ];
 
     // Create a directory for profile images if it doesn't exist
@@ -411,7 +576,7 @@ class AIImageService {
           debugPrint('Profile image saved: $profileImagePath');
         }
       } catch (e) {
-        print('Error generating image variation ${i + 1}: $e');
+        debugPrint('Error generating image variation ${i + 1}: $e');
       }
     }
 

@@ -56,13 +56,14 @@ class BackgroundImageService {
       // Save the face image path
       await prefs.setString(faceImagePathKey, faceImagePath);
       
-      // Initialize just the milestone levels to generate
-      await prefs.setStringList(generatingLevelsKey, milestoneLevels.map((e) => e.toString()).toList());
+      // Initialize milestone levels to generate - skip level 1 since we already have it
+      List<int> levelsToGenerate = milestoneLevels.where((level) => level > 1).toList();
+      await prefs.setStringList(generatingLevelsKey, levelsToGenerate.map((e) => e.toString()).toList());
       
-      // Initialize completed levels list
-      await prefs.setStringList(completedLevelsKey, []);
+      // Add level 1 to completed levels since we already have it
+      await prefs.setStringList(completedLevelsKey, ["1"]);
       
-      debugPrint('Background image generation initialized for milestone levels: ${milestoneLevels.join(", ")}');
+      debugPrint('Background image generation initialized for milestone levels: ${levelsToGenerate.join(", ")}');
     } catch (e) {
       debugPrint('Error initializing background generation: $e');
     }
@@ -75,9 +76,20 @@ class BackgroundImageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(faceImagePathKey, faceImagePath);
       
+      // Check if level 1 image already exists
+      final directory = await getApplicationDocumentsDirectory();
+      final String level1ImagePath = '${directory.path}/user_images/user_level_1.jpg';
+      final bool level1Exists = await File(level1ImagePath).exists();
+      
       // Set up the list of milestone levels to generate
-      await prefs.setStringList(generatingLevelsKey, milestoneLevels.map((e) => e.toString()).toList());
-      await prefs.setStringList(completedLevelsKey, []);
+      List<int> levelsToGenerate = level1Exists 
+          ? milestoneLevels.where((level) => level > 1).toList()
+          : milestoneLevels;
+          
+      await prefs.setStringList(generatingLevelsKey, levelsToGenerate.map((e) => e.toString()).toList());
+      
+      // Initialize completed levels list - if level 1 exists, mark it as completed
+      await prefs.setStringList(completedLevelsKey, level1Exists ? ["1"] : []);
       
       if (Platform.isIOS) {
         // Start iOS background service
@@ -202,15 +214,30 @@ Future<bool> _generateImages() async {
     generatingLevels.remove(levelStr);
     await prefs.setStringList(BackgroundImageService.generatingLevelsKey, generatingLevels);
     
+    // Check if we already have this level generated
+    final directory = await getApplicationDocumentsDirectory();
+    final String imagePath = '${directory.path}/user_images/user_level_$level.jpg';
+    final bool imageExists = await File(imagePath).exists();
+    
+    if (imageExists) {
+      // Image already exists, just mark it completed and continue
+      completedLevels.add(levelStr);
+      await prefs.setStringList(BackgroundImageService.completedLevelsKey, completedLevels);
+      debugPrint('Image for level $level already exists, skipping generation');
+      
+      // If there are more levels to generate, return false to continue
+      return generatingLevels.isEmpty;
+    }
+    
     // Generate the image
     debugPrint('Generating image for level $level');
-    final String? imagePath = await AIImageService.generateHunterImage(faceImagePath, level);
+    final String? generatedImagePath = await AIImageService.generateHunterImage(faceImagePath, level);
     
-    if (imagePath != null) {
+    if (generatedImagePath != null) {
       // Image generation successful
       completedLevels.add(levelStr);
       await prefs.setStringList(BackgroundImageService.completedLevelsKey, completedLevels);
-      debugPrint('Generated image for level $level: $imagePath');
+      debugPrint('Generated image for level $level: $generatedImagePath');
       
       // If there are more levels to generate, return false to continue
       if (generatingLevels.isNotEmpty) {
