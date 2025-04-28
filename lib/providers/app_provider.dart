@@ -172,6 +172,46 @@ class AppProvider extends ChangeNotifier {
     }
   }
 
+  // Delete a mission
+  Future<void> deleteMission(String missionId, [BuildContext? context]) async {
+    try {
+      // Delete the mission from storage
+      final success = await StorageService.deleteMission(missionId);
+      
+      if (success) {
+        // Show a snackbar if context is provided
+        if (context != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Mission deleted'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        // Reload missions to reflect changes
+        await _loadAllMissions();
+        await _loadDailyMissions();
+        
+        debugPrint('Mission deleted and lists refreshed');
+      }
+    } catch (e) {
+      debugPrint('Error deleting mission: $e');
+      
+      // Show error message if context is provided
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to delete mission'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   // Directly complete a quick mission from popup
   Future<void> completeQuickMission(Mission mission, BuildContext? context) async {
     try {

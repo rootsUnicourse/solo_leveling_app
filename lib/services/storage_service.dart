@@ -397,42 +397,79 @@ class StorageService {
     }
   }
 
-  static Future<void> completeMission(String missionId) async {
+  static Future<bool> completeMission(String missionId) async {
+    try {
+      // Get the mission
+      final box = await _getMissionsBox();
+      final mission = box.get(missionId);
+      
+      if (mission == null) {
+        debugPrint('Mission not found: $missionId');
+        return false;
+      }
+      
+      // Mark mission as completed
+      mission.isCompleted = true;
+      
+      // Save the updated mission
+      await box.put(missionId, mission);
+      
+      // Update user stats and XP based on mission type
+      await _updateUserStatsForMission(mission);
+      
+      return true;
+    } catch (e) {
+      debugPrint('Error completing mission: $e');
+      return false;
+    }
+  }
+  
+  // Delete a mission
+  static Future<bool> deleteMission(String missionId) async {
+    try {
+      final box = await _getMissionsBox();
+      
+      // Check if the mission exists
+      if (!box.containsKey(missionId)) {
+        debugPrint('Mission not found for deletion: $missionId');
+        return false;
+      }
+      
+      // Delete the mission
+      await box.delete(missionId);
+      debugPrint('Mission deleted: $missionId');
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting mission: $e');
+      return false;
+    }
+  }
+
+  // Update user stats based on completed mission
+  static Future<void> _updateUserStatsForMission(Mission mission) async {
     try {
       if (!_initialized) {
         await init();
       }
       
-      final box = _getMissionsBox();
-      final mission = box.get(missionId);
+      final box = _getUserBox();
+      final user = box.get(currentUserKey) as User;
       
-      if (mission != null) {
-        debugPrint('Completing mission: ${mission.name}');
-        mission.isCompleted = true;
-        await box.put(missionId, mission);
-        
-        // Update user stats
-        final user = await getUser();
-        user.addXp(mission.xp);
-        
-        // Check if this is a quick mission (starting with 'quick_')
-        if (missionId.startsWith('quick_')) {
-          // For quick missions, add fixed amount of stat points (reduced from 5 to 2)
-          user.addStatPoints(mission.type.toString().split('.').last, mission.xp, extraPoints: 2);
-          debugPrint('Added extra stat points for quick mission');
-        } else {
-          // Regular missions use the normal calculation
-          user.addStatPoints(mission.type.toString().split('.').last, mission.xp);
-        }
-        
-        await saveUser(user);
-        debugPrint('Mission completed and user updated');
-      } else {
-        debugPrint('Mission not found: $missionId');
+      // Update user stats
+      user.addXp(mission.xp);
+      user.addStatPoints(mission.type.toString().split('.').last, mission.xp);
+      
+      // Check if this is a quick mission (starting with 'quick_')
+      if (mission.id.startsWith('quick_')) {
+        // For quick missions, add fixed amount of stat points (reduced from 5 to 2)
+        user.addStatPoints(mission.type.toString().split('.').last, mission.xp, extraPoints: 2);
+        debugPrint('Added extra stat points for quick mission');
       }
+      
+      await saveUser(user);
+      debugPrint('Mission completed and user updated');
     } catch (e) {
-      debugPrint('Error completing mission: $e');
-      // Let the caller handle the error
+      debugPrint('Error updating user stats for mission: $e');
       rethrow;
     }
   }
