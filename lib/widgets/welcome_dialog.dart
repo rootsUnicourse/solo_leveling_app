@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:solo_leveling_app/services/storage_service.dart';
-import 'package:solo_leveling_app/screens/camera_screen.dart';
-import 'package:solo_leveling_app/screens/hunter_generation_screen.dart';
+import 'package:solo_leveling_app/screens/auto_hunter_generation_screen.dart';
 
 class WelcomeDialog extends StatelessWidget {
   const WelcomeDialog({Key? key}) : super(key: key);
@@ -19,30 +18,17 @@ class WelcomeDialog extends StatelessWidget {
         );
         
         if (result == true) {
-          // User accepted, proceed to camera screen
+          // User accepted, proceed directly to auto hunter generation
           if (context.mounted) {
-            final imagePath = await Navigator.of(context).push<String>(
+            // Mark app as opened
+            await StorageService.markAppOpened();
+            
+            // Navigate to auto hunter generation screen
+            Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => const CameraScreen(),
+                builder: (context) => const AutoHunterGenerationScreen(),
               ),
             );
-            
-            if (imagePath != null && context.mounted) {
-              // Mark app as opened
-              await StorageService.markAppOpened();
-              
-              // Navigate to hunter generation screen
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => HunterGenerationScreen(
-                    faceImagePath: imagePath,
-                  ),
-                ),
-              );
-            } else if (context.mounted) {
-              // User cancelled camera, mark app as opened anyway
-              await StorageService.markAppOpened();
-            }
           }
         } else {
           // User declined or dialog was dismissed, exit app
@@ -101,7 +87,7 @@ class WelcomeDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'By accepting, you will become a hunter. We will create a personalized hunter profile based on your face.',
+              'By accepting, you will become a hunter. We will create a personalized hunter profile for you as an E-rank hunter.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey,

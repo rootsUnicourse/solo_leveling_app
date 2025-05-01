@@ -93,22 +93,6 @@ class AIImageService {
         return null;
       }
 
-      if (faceImagePath == null) {
-        debugPrint('Warning: No face image provided for InstantID');
-        return null;
-      }
-
-      // Preprocess the face image
-      final faceImageFile = File(faceImagePath);
-      final faceImageBytes = await faceImageFile.readAsBytes();
-      final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
-      
-      final faceImageBase64 = base64Encode(processedFaceBytes);
-      final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
-          ? 'image/jpeg' 
-          : 'image/png';
-      final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
-
       // Use custom prompt if provided, otherwise use the level-specific prompt using the helper
       const _angles = ['¾ view left', '¾ view right', 'front view', 'slight low-angle'];
       const _lights = ['cool rim-light', 'warm back-light', 'dramatic top-light', 'purple under-glow'];
@@ -121,8 +105,8 @@ class AIImageService {
       // Generate unique, deterministic seed per level
       final seed = (level * 7919) % 2147483647; // 2^31-1
 
-      // Create the input for the API with improved parameters for anime style portrait
-      final input = _cleanInput({
+      // Create base input for the API
+      final Map<String, dynamic> input = {
         'prompt': '$prompt, wearing a high-collar black coat that fully covers chest and shoulders',
         'negative_prompt': _negativePrompt,
         'width': imageSize,
@@ -130,13 +114,42 @@ class AIImageService {
         'num_inference_steps': 30,
         'guidance_scale': 7.5,
         'seed': seed,
-        'image': faceImageDataUrl,
-        'ip_adapter_scale': _animeScaleFor(level), // Use level-specific face lock strength
         'sdxl_weights': _animeCheckpoint, // Using exact value from allowed list
-      });
+      };
 
-      debugPrint('Starting image generation with face image');
-      debugPrint('Using InstantID model with anime stylization');
+      // Determine model version and whether to add face image data
+      String modelVersion = _modelVersionAnimagine;
+      
+      // If face image is provided, use InstantID
+      if (faceImagePath != null && faceImagePath.isNotEmpty) {
+        // Preprocess the face image
+        final faceImageFile = File(faceImagePath);
+        final faceImageBytes = await faceImageFile.readAsBytes();
+        final processedFaceBytes = await _preprocessImage(Uint8List.fromList(faceImageBytes));
+        
+        final faceImageBase64 = base64Encode(processedFaceBytes);
+        final faceMime = faceImagePath.toLowerCase().endsWith('.jpg') || faceImagePath.toLowerCase().endsWith('.jpeg') 
+            ? 'image/jpeg' 
+            : 'image/png';
+        final faceImageDataUrl = 'data:$faceMime;base64,$faceImageBase64';
+        
+        // Add face image to input
+        input['image'] = faceImageDataUrl;
+        input['ip_adapter_scale'] = _animeScaleFor(level);
+        
+        // Use InstantID model
+        modelVersion = _modelVersionInstantID;
+        
+        debugPrint('Starting image generation with face image');
+        debugPrint('Using InstantID model with anime stylization');
+      } else {
+        // No face image, using regular Animagine model
+        debugPrint('Starting image generation without face image');
+        debugPrint('Using Animagine model with anime stylization');
+      }
+
+      // Clean up the input to remove null values
+      final cleanedInput = _cleanInput(input);
       
       // Make the API call to Replicate with Prefer: wait header for synchronous mode
       final response = await http.post(
@@ -147,8 +160,8 @@ class AIImageService {
           'Prefer': 'wait', // Use synchronous mode instead of wait=60
         },
         body: jsonEncode({
-          'version': _modelVersion,
-          'input': input
+          'version': modelVersion,
+          'input': cleanedInput
         }),
       );
 
@@ -543,6 +556,106 @@ class AIImageService {
           await File(imagePath).copy(profileImagePath);
           imagePaths.add(profileImagePath);
           debugPrint('Profile image saved: $profileImagePath');
+        }
+      } catch (e) {
+        debugPrint('Error generating image variation ${i + 1}: $e');
+      }
+    }
+
+    return imagePaths;
+  }
+
+  // Generate hunter images without face input
+  static Future<List<String>> generateAutoHunterImages() async {
+    final List<String> imagePaths = [];
+    final List<String> variations = [
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with neutral expression, black hair, dark brown eyes, wearing a simple blue hoodie, no visible aura or effects, minimal styling, ¾ view left, cool rim-light",
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with slight smile, black hair, dark brown eyes, wearing a simple dark jacket, very faint blue aura, clean lines, front view, warm back-light",
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with determined expression, black hair, dark brown eyes, wearing a casual outfit with hood, subtle styling, ¾ view right, dramatic top-light"
+    ];
+
+    // Create a directory for profile images if it doesn't exist
+    final directory = await getApplicationDocumentsDirectory();
+    final profileDir = Directory('${directory.path}/profile_images');
+    if (!await profileDir.exists()) {
+      await profileDir.create(recursive: true);
+    }
+
+    for (int i = 0; i < variations.length; i++) {
+      try {
+        // Create API request for Replica without InstantID
+        final apiKey = dotenv.env['REPLICATE_API_TOKEN'];
+        if (apiKey == null) {
+          debugPrint('Warning: REPLICATE_API_TOKEN is not set in environment variables');
+          continue;
+        }
+
+        // Higher resolution for better quality
+        const imageSize = 768;
+        
+        // Generate unique seed per variation
+        final seed = ((i + 1) * 7919) % 2147483647; // 2^31-1
+
+        // Create the input for the API with improved parameters for anime style portrait
+        final input = _cleanInput({
+          'prompt': variations[i],
+          'negative_prompt': _negativePrompt,
+          'width': imageSize,
+          'height': imageSize,
+          'num_inference_steps': 30,
+          'guidance_scale': 7.5,
+          'seed': seed,
+          'sdxl_weights': _animeCheckpoint, // Using exact value from allowed list
+        });
+
+        debugPrint('Starting image generation for variation ${i + 1}');
+        
+        // Make the API call to Replicate with Prefer: wait header for synchronous mode
+        final response = await http.post(
+          Uri.parse(_apiUrl),
+          headers: {
+            'Authorization': 'Bearer $apiKey',
+            'Content-Type': 'application/json',
+            'Prefer': 'wait', // Use synchronous mode instead of wait=60
+          },
+          body: jsonEncode({
+            'version': _modelVersionAnimagine, // Use Animagine model since we don't need InstantID
+            'input': input
+          }),
+        );
+
+        if (response.statusCode != 201 && response.statusCode != 202) {
+          debugPrint('Failed to start prediction: ${response.statusCode}');
+          debugPrint('Response body: ${response.body}');
+          continue;
+        }
+
+        final prediction = jsonDecode(response.body);
+        debugPrint('Prediction started: ${prediction['id']}');
+        
+        // If the prediction is already complete, get the output URL
+        if (prediction['status'] == 'succeeded' && prediction['output'] != null) {
+          final resultUrl = prediction['output'][0];
+          debugPrint('Image generation completed immediately. Output URL: $resultUrl');
+          final downloadedPath = await _downloadAndSaveImage(resultUrl, 1, variationTag: 'option_${i + 1}');
+          
+          if (downloadedPath != null) {
+            // Copy the generated image to the profile directory with a specific name
+            final profileImagePath = '${profileDir.path}/profile_option_${i + 1}.jpg';
+            await File(downloadedPath).copy(profileImagePath);
+            imagePaths.add(profileImagePath);
+            debugPrint('Profile image saved: $profileImagePath');
+          }
+        } else {
+          // Poll for result
+          final imageUrl = await _pollForResult(prediction['id'], apiKey, 1);
+          if (imageUrl != null) {
+            // Copy the generated image to the profile directory with a specific name
+            final profileImagePath = '${profileDir.path}/profile_option_${i + 1}.jpg';
+            await File(imageUrl).copy(profileImagePath);
+            imagePaths.add(profileImagePath);
+            debugPrint('Profile image saved: $profileImagePath');
+          }
         }
       } catch (e) {
         debugPrint('Error generating image variation ${i + 1}: $e');

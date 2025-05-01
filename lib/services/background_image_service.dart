@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 import 'ai_image_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class BackgroundImageService {
   static const String uniqueWorkName = 'backgroundImageGeneration';
@@ -66,6 +67,27 @@ class BackgroundImageService {
       debugPrint('Background image generation initialized for milestone levels: ${levelsToGenerate.join(", ")}');
     } catch (e) {
       debugPrint('Error initializing background generation: $e');
+    }
+  }
+  
+  // Initialize background generation without a face image
+  static Future<void> initializeAutoBackgroundGeneration() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Set an empty string for face image path to indicate auto-generation
+      await prefs.setString(faceImagePathKey, "");
+      
+      // Initialize milestone levels to generate - skip level 1 since we already have it
+      List<int> levelsToGenerate = milestoneLevels.where((level) => level > 1).toList();
+      await prefs.setStringList(generatingLevelsKey, levelsToGenerate.map((e) => e.toString()).toList());
+      
+      // Add level 1 to completed levels since we already have it
+      await prefs.setStringList(completedLevelsKey, ["1"]);
+      
+      debugPrint('Auto background image generation initialized for milestone levels: ${levelsToGenerate.join(", ")}');
+    } catch (e) {
+      debugPrint('Error initializing auto background generation: $e');
     }
   }
   
@@ -201,8 +223,8 @@ Future<bool> _generateImages() async {
     final List<String> generatingLevels = prefs.getStringList(BackgroundImageService.generatingLevelsKey) ?? [];
     final List<String> completedLevels = prefs.getStringList(BackgroundImageService.completedLevelsKey) ?? [];
     
-    if (faceImagePath == null || generatingLevels.isEmpty) {
-      debugPrint('No face image path or levels to generate');
+    if (generatingLevels.isEmpty) {
+      debugPrint('No levels to generate');
       return true;
     }
     
@@ -231,7 +253,40 @@ Future<bool> _generateImages() async {
     
     // Generate the image
     debugPrint('Generating image for level $level');
-    final String? generatedImagePath = await AIImageService.generateHunterImage(faceImagePath, level);
+    
+    String? generatedImagePath;
+    
+    // If faceImagePath is empty or null, use auto-generation without face
+    if (faceImagePath == null || faceImagePath.isEmpty) {
+      // Generate a level-specific prompt without face reference
+      final prompt = "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, male hunter with determined expression, black hair, wearing a dark combat outfit, rank appropriate styling for level $level";
+      
+      // For auto-generation, we'll make direct API calls to Replica
+      final apiKey = dotenv.env['REPLICATE_API_TOKEN'];
+      if (apiKey != null) {
+        final List<String> generatedImages = [];
+        
+        // Create API request for auto-generation
+        try {
+          // Create a generic level-appropriate image
+          debugPrint('Auto-generating image for level $level');
+          
+          // Generate the auto image - for this example, we're using a direct API call
+          generatedImagePath = await AIImageService.generateHunterImage(
+            null,  // No face image
+            level,
+            customPrompt: prompt,
+          );
+          
+          debugPrint('Auto-generated image for level $level: $generatedImagePath');
+        } catch (e) {
+          debugPrint('Error in auto-generation: $e');
+        }
+      }
+    } else {
+      // Use the normal face-based generation if we have a face image
+      generatedImagePath = await AIImageService.generateHunterImage(faceImagePath, level);
+    }
     
     if (generatedImagePath != null) {
       // Image generation successful
