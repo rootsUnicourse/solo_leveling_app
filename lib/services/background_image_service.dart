@@ -258,14 +258,42 @@ Future<bool> _generateImages() async {
     
     // If faceImagePath is empty or null, use auto-generation without face
     if (faceImagePath == null || faceImagePath.isEmpty) {
-      // Generate a level-specific prompt without face reference
-      final prompt = "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, male hunter with determined expression, black hair, wearing a dark combat outfit, rank appropriate styling for level $level";
+      // Generate a level-specific prompt without face reference based on Jin-woo's progression
+      final String levelDescription = level <= 5 ? 
+          "E-rank hunter with unkempt black hair, skinny build, exhausted expression" :
+          level <= 15 ? 
+          "awakening hunter with black hair, more defined build, confident stance" :
+          level <= 30 ? 
+          "shadow summoner with black hair, athletic build, determined expression, eyes glowing purple" :
+          level <= 50 ? 
+          "shadow monarch with black hair, powerful build, fierce expression, wielding twin daggers, shadow aura" :
+          "fully realized shadow monarch with regal posture, commanding presence, shadow wings, glowing purple eyes";
+          
+      final String outfitDescription = level <= 5 ? 
+          "simple blue hoodie and jeans" :
+          level <= 15 ? 
+          "fitted black hoodie or jacket" :
+          level <= 30 ? 
+          "dark tactical gear with long coat" :
+          level <= 50 ? 
+          "black leather armor with battle damage, carrying Demon King's Daggers" :
+          "jet-black battle armor with red accents, shadow wings unfurled";
+          
+      final String auraDescription = level <= 5 ? 
+          "no special aura or powers" :
+          level <= 15 ? 
+          "faint purple glow in eyes" :
+          level <= 30 ? 
+          "crimson shadow glow enveloping him" :
+          level <= 50 ? 
+          "crackling shadow aura swirling around weapons and body" :
+          "massive dark supernatural aura, shadow wings fully formed";
+      
+      final prompt = "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling anime style, young male $levelDescription, wearing $outfitDescription, $auraDescription, Solo Leveling character at level $level";
       
       // For auto-generation, we'll make direct API calls to Replica
       final apiKey = dotenv.env['REPLICATE_API_TOKEN'];
       if (apiKey != null) {
-        final List<String> generatedImages = [];
-        
         // Create API request for auto-generation
         try {
           // Create a generic level-appropriate image

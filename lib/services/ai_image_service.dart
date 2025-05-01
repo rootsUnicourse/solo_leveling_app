@@ -47,21 +47,21 @@ class AIImageService {
 
   // Updated milestone prompts for Solo Leveling character progression
   static const Map<int, String> _milestonePrompts = {
-    1 : 'the user\'s face with a calm determined expression, wearing a simple blue hoodie and jeans (casual style), very faint purple glow in the eyes, slight wisps of blue-black mist around the shoulders, Solo Leveling inspired',
-    5 : 'the user\'s face with a confident smirk, wearing a simple t-shirt with high collar that fully covers chest and shoulders (casual attire), faint purple gleam in the eyes, a barely visible purple aura flickering around the head, wisps of shadow mist, Solo Leveling inspired',
-    10: 'the user\'s face with a focused serious expression, wearing a dark hoodie with high collar that fully covers chest and shoulders, eyes lightly glowing purple, soft purple aura beginning to swirl at the shoulders, thin blue-black tendrils of shadow forming behind, Solo Leveling inspired',
-    15: 'the user\'s face with a determined gaze, dressed in a black jacket with high collar that fully covers chest and shoulders, eyes shining with a soft purple glow, moderate purple aura enveloping the upper torso, blue-black shadow mist curling around the neck, Solo Leveling inspired',
-    20: 'the user\'s face with a fierce glare, wearing a sleek dark leather jacket with high collar that fully covers chest and shoulders, eyes bright purple, a strong pulsing purple aura around the head and shoulders, dark blue-black shadow tendrils swirling intensely, Solo Leveling inspired',
-    25: 'the user\'s face with a narrowed, intense look, dressed in a fitted black jacket with high collar that fully covers chest and shoulders, subtle purple accents, eyes glowing deep purple, vibrant purple aura radiating outward, thick blue-black shadow mist swirling wildly around the bust, Solo Leveling inspired',
-    30: 'the user\'s face with a serious, commanding expression, wearing a dark leather coat with high collar that fully covers chest and shoulders (no armor plating yet), eyes fully purple and blazing, brilliant purple aura flaring behind, heavy blue-black shadow tendrils twisting around the shoulders, Solo Leveling inspired',
-    35: 'the user\'s face with a smirk of confidence, clad in a sleek black coat with high collar that fully covers chest and shoulders, eyes glowing bright purple, intense violet aura now radiating around the head, swirling inky-blue shadow smoke curling behind, Solo Leveling inspired',
-    40: 'the user\'s face with a bold, almost aggressive grin, wearing a dark coat with high collar that fully covers chest and shoulders, eyes intensely purple-bright, powerful purple aura pulsating around the bust, thick blue-black shadow tendrils fanning out behind, Solo Leveling inspired',
-    45: 'the user\'s face with a commanding glare, dressed in a black leather jacket with high collar that fully covers chest and shoulders (no visible weapon), eyes blazing bright purple, brilliant purple aura and energy crackles visible, swirling black-purple shadow mist and tendrils enveloping the shoulders, Solo Leveling inspired',
-    50: 'the user\'s face with a ferocious, determined scowl, wearing a fitted black coat with high collar that fully covers chest and shoulders, subtle design, eyes glowing vibrant purple, intense purple aura surging around him, thick bluish-black shadow fog swirling and dancing behind the bust, Solo Leveling inspired',
-    55: 'the user\'s face with a savage grin and narrowed eyes, dressed in a black leather trench coat with high collar that fully covers chest and shoulders, eyes shining piercing purple, overwhelming purple aura and crackling energy around his form, heavy dark shadow mist with visible tendrils clinging to the shoulders, Solo Leveling inspired',
-    60: 'the user\'s face with an intense, almost predatory stare, wearing a high-collared black coat with subtle shadow-armor plating on the shoulders that fully covers chest and shoulders, eyes glowing luminous purple, raging purple aura enveloping the upper body, thick blue-black shadow armor fragments and mist swirling fiercely around, Solo Leveling inspired',
-    65: 'the user\'s face with a brutal confident smile, outfitted in a dark coat with high collar that fully covers chest and shoulders, emerging shadow-armor details on chest and shoulders, eyes blazing bright purple with dark sclera, overwhelming purple aura and shadow energy radiating, black-blue tendrils of shadow swirling like wings behind, Solo Leveling inspired',
-    70: 'the user\'s face with a fearless, commanding expression, fully in a dark outfit with high collar that fully covers chest and shoulders, prominent shadow-armor plating on shoulders, eyes fully glowing intense purple, colossal purple-black aura swirling violently, massive blue-black shadow mist swirling like spikes behind him, Solo Leveling inspired'
+    1 : 'young male with unkempt black hair, skinny build, exhausted expression, wearing a simple blue hoodie and jeans, timid posture, Solo Leveling E-rank hunter, no special aura or powers',
+    5 : 'young male with black hair, slightly more muscular build, alert expression, wearing simple dark clothing, Solo Leveling E-rank hunter beginning to awaken, no visible aura yet',
+    10: 'young male with black hair, taller and more defined build, confident stance, sharp facial features, wearing a fitted black hoodie, eyes briefly glowing purple when using powers, Solo Leveling hunter',
+    15: 'young male with black hair, athletic build, determined expression, wearing a black fitted jacket, faint purple glow in eyes, beginning to manifest shadow powers, Solo Leveling hunter',
+    20: 'young male with black hair, muscular build, focused expression, wearing a dark tactical outfit, eyes glowing purple, faint blue-black shadow mist forming around him, Solo Leveling hunter',
+    25: 'young male with black hair, athletic build, calm calculating expression, wearing a long dark coat over tactical black gear, with twin daggers at waist, eyes with menacing red tint when attacking, Solo Leveling assassin-necromancer',
+    30: 'young male with black hair, muscular build, resolute expression, wearing fitted black raid jacket and combat pants with boots, wielding twin daggers, eyes glowing purple, faint crimson shadow glow enveloping him, Solo Leveling shadow summoner',
+    35: 'young male with black hair, athletic build, cold determined expression, wearing dark durable combat outfit, wielding twin daggers with blinding speed, eyes blazing vivid red-purple during attacks, visible red-tinged aura, Solo Leveling shadow commander',
+    40: 'young male with black hair, strong build, confident almost-smiling expression, wearing a modern black combat outfit, carrying daggers openly, surrounded by a faint red aura, commanding shadows, Solo Leveling shadow army leader',
+    45: 'young male with black hair, powerful build, fierce expression, wearing black leather armor with minor battle damage, wielding specialized daggers, crackling shadow aura swirling around weapons and body, Solo Leveling shadow monarch',
+    50: 'young male with black hair, powerful build, determined scowl, wearing battle-worn dark leather armor, wielding the Demon King\'s Daggers, black-red magical energy arcing around him during combat, Solo Leveling shadow monarch',
+    55: 'young male with black hair, powerful build, intense expression, wearing a black armored jacket and combat gear, wielding twin daggers with deadly precision, surrounded by swirling shadow mist, eyes glowing bright red-purple, Solo Leveling shadow monarch',
+    60: 'young male with black hair, imposing build, commanding expression, wearing form-fitting battle armor with red accents, wielding the Demon King\'s Daggers, shadow wings partially forming behind him, eyes blazing solid purple, Solo Leveling shadow monarch',
+    65: 'young male with black hair, powerful build, cold calculating expression, wearing jet-black battle armor with red highlights, wielding deadly twin daggers, dark mist-like aura enveloping him, shadow wings visible, eyes glowing intense purple, Solo Leveling shadow monarch',
+    70: 'young male with black hair, regal posture, commanding gaze, wearing full Shadow Monarch armor - jet-black with red accents, wielding the Demon King\'s Daggers, massive shadow wings unfurled behind him, eyes blazing solid purple, surrounded by a dark supernatural aura, Solo Leveling shadow monarch at full power'
   };
   
   // Helper picks the last milestone ≤ level so you can still call with any level
@@ -76,8 +76,9 @@ class AIImageService {
     'nsfw, nude, nudity, exposed skin, lingerie, cleavage, suggestive, erotic, bare shoulders, '
     'photorealistic, realistic skin, photographic, real photo, 3d, realistic, photo, photographic, skin pores, hyperrealistic, '
     'render, cgi, doll, plastic, blurry, lowres, watermark, text, logo, '
-    'extra limbs, hands, arms, weapon, background, out-of-frame, bad anatomy, '
-    'worst quality, distorted, deformed, ugly, grainy';
+    'extra limbs, hands, arms, weapon in frame, background objects, out-of-frame, bad anatomy, '
+    'worst quality, distorted, deformed, ugly, grainy, multiple heads, extra fingers, '
+    'western comics style, american cartoon, chibi, magical girl style, moe style';
 
   // Generate a hunter image for the specified level
   static Future<String?> generateHunterImage(
@@ -569,9 +570,9 @@ class AIImageService {
   static Future<List<String>> generateAutoHunterImages() async {
     final List<String> imagePaths = [];
     final List<String> variations = [
-      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with neutral expression, black hair, dark brown eyes, wearing a simple blue hoodie, no visible aura or effects, minimal styling, ¾ view left, cool rim-light",
-      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with slight smile, black hair, dark brown eyes, wearing a simple dark jacket, very faint blue aura, clean lines, front view, warm back-light",
-      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling style, young male E-rank hunter with determined expression, black hair, dark brown eyes, wearing a casual outfit with hood, subtle styling, ¾ view right, dramatic top-light"
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling anime style, young male E-rank hunter with unkempt black hair, skinny build, exhausted expression, wearing a simple blue hoodie and jeans, timid posture, no special aura or powers, Solo Leveling E-rank hunter, ¾ view left, cool rim-light",
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling anime style, young male E-rank hunter with black hair, slightly muscular build, alert expression, wearing simple dark clothing, Solo Leveling E-rank hunter beginning to awaken, front view, warm back-light",
+      "anime illustration, masterpiece, best quality, ultra-detailed, anime screencap, crisp line-art, vibrant colors, Solo Leveling anime style, young male with black hair, more defined build, confident stance, sharp facial features, wearing a fitted black hoodie, eyes with hint of purple, Solo Leveling hunter, ¾ view right, dramatic top-light"
     ];
 
     // Create a directory for profile images if it doesn't exist
