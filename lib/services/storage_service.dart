@@ -528,8 +528,16 @@ class StorageService {
           .where((mission) => mission.isDaily)
           .toList();
       
-      // Sort by date
-      dailyMissions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      // Sort: active missions first, then completed missions
+      // If completion status is the same, sort by date (newest first)
+      dailyMissions.sort((a, b) {
+        // First compare completion status
+        if (a.isCompleted != b.isCompleted) {
+          return a.isCompleted ? 1 : -1; // Active missions first
+        }
+        // If both are completed or both are active, sort by date (newest first)
+        return b.createdAt.compareTo(a.createdAt);
+      });
       
       return dailyMissions;
     } catch (e) {

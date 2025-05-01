@@ -88,6 +88,18 @@ class AppProvider extends ChangeNotifier {
   // Load daily missions
   Future<void> _loadDailyMissions() async {
     _dailyMissions = await StorageService.getDailyMissions();
+    
+    // Sort daily missions: active missions first, then completed missions
+    // If completion status is the same, sort by creation date (newest first)
+    _dailyMissions.sort((a, b) {
+      // First compare completion status
+      if (a.isCompleted != b.isCompleted) {
+        return a.isCompleted ? 1 : -1; // Active missions first
+      }
+      // If both are completed or both are active, sort by date (newest first)
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    
     notifyListeners();
   }
 
